@@ -54,29 +54,29 @@ http://localhost:3000/send-notification
 - Automated Weather Updates
 The bot is configured to send automated weather updates at regular intervals:
 
+- The cron jobs are defined using **node-cron** and will automatically trigger the weather notifications as per the schedule:
 **Every 2 hours**: 8 AM to 10 PM
 **Every 30 minutes**: 10 AM to 11:30 AM, 5 PM to 6:30 PM - Peak Hour
-The cron jobs are defined using **node-cron** and will automatically trigger the weather notifications as per the schedule.
 
-**API Endpoints**
-GET /: Serves the homepage (index.html).
-GET /map?lat=&lng=&zoom=: Serves the map view with the specified coordinates and zoom level.
+**API Endpoints**:
+GET /: Serves the homepage (index.html). ||
+GET /map?lat=&lng=&zoom=: Serves the map view with the specified coordinates and zoom level. ||
 GET /send-notification: Triggers a manual Slack notification.
 
-**API Routes**
-/send-notification: Manually trigger a Slack weather notification.
+**API Routes**:
+/send-notification: Manually trigger a Slack weather notification. ||
 /map: View an interactive map of a specified location using query parameters:
-lat: Latitude of the location.
-lng: Longitude of the location.
-zoom: Zoom level of the map.
-Example: http://localhost:3000/map?lat=3.1390&lng=101.6869&zoom=10
+- lat: Latitude of the location.
+- lng: Longitude of the location.
+- zoom: Zoom level of the map.
+**Example: http://localhost:3000/map?lat=3.1390&lng=101.6869&zoom=10**
 
-Debugging
+**Debugging**
 For debugging purposes, logs are printed to the console when the weather data is fetched or sent to Slack.
 
 **Future Development**
-- Adding New Locations
-You can easily extend the project to support more locations by adding entries to the locations object in app.js. Each location must have a name, weather API endpoint, coordinates, and zoom level.
+- Adding New Locations:
+Extend the project to support more locations by adding entries to the locations object in app.js. P.S: Each location **must** have a name, weather API endpoint, coordinates, and zoom level.
 
 
 
