@@ -10,7 +10,7 @@ This project is a weather notification Slackbot that mainly for delivery and log
   
 
 - Scheduled weather updates posted to a Slack channel at regular intervals
-- A built-in cron scheduler sends weather updates every 2 hours between 8 AM and 10 PM and more frequently during specified periods.
+- A built-in cron scheduler sends weather updates during specified periods.
 - Interactive Slack message with buttons linking to weather maps
 - Cached weather data to minimize unnecessary API calls
 - Weather data is cached for 5 minutes to optimize API requests.
