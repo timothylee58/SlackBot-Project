@@ -6,7 +6,9 @@ This project is a weather notification Slackbot that mainly for delivery and log
 
 - Fetches weather data for **Klang Valley (Malaysia), Singapore, and Hong Kong** from respective government APIs such as:
 **Malaysia Weather Warning from MET Malaysia**: [Data.gov.my ](https://developer.data.gov.my/realtime-api/weather#source-of-weather-data)
+  
 **2-hour weather forecast from data.gov.sg**: [Data.gov.sg](https://data.gov.sg/collections/1459/view)
+
 **General weather update from Hong Kong Observatory**: [Hong Kong Observatory API ](https://www.hko.gov.hk/en/weatherAPI/doc/files/HKO_Open_Data_API_Documentation.pdf)
 
 - Scheduled weather updates posted to a Slack channel at regular intervals
