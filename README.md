@@ -29,7 +29,7 @@ This project is a weather notification Slackbot that mainly for delivery and log
   
 **Installation Guide**
 1. Clone the repository:
-- git clone https://github.com/timothylee58/weather-slackbot.git
+- git clone https://github.com/timothylee58/SlackBot-Project.git
 - cd weather-slackbot
 
 2. Install the required dependencies:
