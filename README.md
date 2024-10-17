@@ -3,13 +3,12 @@
 This project is a weather notification Slackbot that mainly for delivery and logistics ops. It fetches and sends real-time weather updates for three regions: Klang Valley (Malaysia), Singapore, and Hong Kong. It retrieves weather data from public APIs and sends notifications to a designated Slack channel at scheduled intervals using cron jobs. The bot also includes an interactive map feature that allows users to view weather updates on a map interface.
 
 **Features**
-
-- Fetches weather data for **Klang Valley (Malaysia), Singapore, and Hong Kong** from respective government APIs such as:
-**Malaysia Weather Warning from MET Malaysia**: [Data.gov.my ](https://developer.data.gov.my/realtime-api/weather#source-of-weather-data)
+Fetches weather data for **Klang Valley (Malaysia), Singapore, and Hong Kong** from respective government APIs such as:
+- **Malaysia Weather Warning from MET Malaysia**: [Data.gov.my ](https://developer.data.gov.my/realtime-api/weather#source-of-weather-data)
   
-**2-hour weather forecast from data.gov.sg**: [Data.gov.sg](https://data.gov.sg/collections/1459/view)
+- **2-hour weather forecast from data.gov.sg**: [Data.gov.sg](https://data.gov.sg/collections/1459/view)
 
-**General weather update from Hong Kong Observatory**: [Hong Kong Observatory API ](https://www.hko.gov.hk/en/weatherAPI/doc/files/HKO_Open_Data_API_Documentation.pdf)
+- **General weather update from Hong Kong Observatory**: [Hong Kong Observatory API ](https://www.hko.gov.hk/en/weatherAPI/doc/files/HKO_Open_Data_API_Documentation.pdf)
 
 - Scheduled weather updates posted to a Slack channel at regular intervals
 - A built-in cron scheduler sends weather updates every 2 hours between 8 AM and 10 PM and more frequently during specified periods.
