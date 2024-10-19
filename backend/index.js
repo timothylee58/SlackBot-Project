@@ -180,7 +180,7 @@ function formatLocationData(weatherData, locationKey) {
             const selectedAreas = [
                 "Ang Mo Kio", "Toa Payoh", "Changi", "City",
                 "Jurong East", "Jurong West", "Tuas", "Kallang",
-                "Pasir Ris", "Woodlands"
+                "Pasir Ris", "Woodlands","Bukit Panjang","Queenstown","Bedok","Sentosa",
             ];
             
             const sgForecasts = weatherData.items[0].forecasts
