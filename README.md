@@ -11,7 +11,7 @@ This project is a weather notification Slackbot that mainly for delivery and log
 
 - Scheduled weather updates posted to a Slack channel at regular intervals
 - A built-in cron scheduler sends weather updates during specified periods.
-- Interactive Slack message with buttons linking to weather maps
+- Interactive Slack message with buttons linking to interactive weather maps
 - Cached weather data to minimize unnecessary API calls
 - Weather data is cached for 5 minutes to optimize API requests.
 - Interactive map interface for displaying weather updates based on coordinates.
@@ -35,7 +35,7 @@ This project is a weather notification Slackbot that mainly for delivery and log
 2. Install the required dependencies:
 - npm install
 
-3. Create a .env file in the root directory and add your following environment variables:
+3. Create a .env file in the root directory and add your own following environment variables:
 - SLACK_BOT_TOKEN=slack-bot-token
 - SLACK_CHANNEL_ID=slack-channel-id
 
