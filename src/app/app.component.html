@@ -1,0 +1,9 @@
+<div *ngIf="weatherData">
+  <h2>Weather Forecast</h2>
+  <p>It's {{ weatherData.current.temp }}° C - {{ weatherData.current.description }} throughout the day and night.</p>
+  <p>High - Low: {{ weatherData.daily.high }}° C - {{ weatherData.daily.low }}° C</p>
+  <p>Wind: :arrow_upper_left: NW at {{ weatherData.current.windSpeed }} KPH</p>
+  <p>Feels like: {{ weatherData.current.feelsLike }}° C</p>
+  <p>Precipitation in next hour: {{ weatherData.current.precipitation }} mm</p>
+  <!-- Add more data as needed -->
+</div>
