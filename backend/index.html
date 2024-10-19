@@ -230,7 +230,7 @@ function fetchMalaysiaWeather() {
                 { city: "Damansara", coordinates: [3.1434, 101.6097] },    
                 { city: "Batu Caves", coordinates: [3.2379, 101.6841] },  
                 { city: "Kepong", coordinates: [3.2187, 101.6505] },     
-                { city: "Setapak", coordinates: [3.2119, 101.7269] } 
+            { city: "Setapak", coordinates: [3.2119, 101.7269] } 
                 ];
               const PenangCities = [
                 // Penang region
@@ -346,22 +346,22 @@ function fetchMalaysiaWeather() {
                     // Construct the weather icon URL
                     const iconUrl = `https://www.hko.gov.hk/images/HKOWxIconOutline/pic${weatherData.weatherIconId}.png`;
         
-
-            // Combine the weather data into a single message
-            const weatherText = `
-                <b>Max Temperature:</b> ${weatherData.maxTemp}°C<br>
-                <b>Min Temperature:</b> ${weatherData.minTemp}°C<br>
-                <b>General Situation:</b> ${weatherData.generalSituation}<br>
-                <b>Typhoon Info:</b> ${weatherData.tcInfo}<br>
-                <b>Forecast Period:</b> ${weatherData.forecastPeriod}<br>
-                <b>Forecast Description:</b> ${weatherData.forecastDesc}<br>
-                <b>Outlook:</b> ${weatherData.outlook}<br>
-                <b>Local Waters Forecast:</b> ${flwWeatherData.localWatersForecast}<br>
-                <img src="${iconUrl}" alt="Weather Icon" style="width: 50px; height: 50px;" />
+                    // Loop through each region and add a marker with a popup
+                    hongKongRegions.forEach(region => {
+                    // Combine the weather data into a single message
+                    const weatherText = `
+                        <b>Max Temperature:</b> ${weatherData.maxTemp}°C<br>
+                        <b>Min Temperature:</b> ${weatherData.minTemp}°C<br>
+                        <b>General Situation:</b> ${weatherData.generalSituation}<br>
+                        <b>Typhoon Info:</b> ${weatherData.tcInfo}<br>
+                        <b>Forecast Period:</b> ${weatherData.forecastPeriod}<br>
+                        <b>Forecast Description:</b> ${weatherData.forecastDesc}<br>
+                        <b>Outlook:</b> ${weatherData.outlook}<br>
+                        <b>Local Waters Forecast:</b> ${flwWeatherData.localWatersForecast}<br>
+                        <img src="${iconUrl}" alt="Weather Icon" style="width: 50px; height: 50px;" />
             `;
 
-            // Loop through each region and add a marker with a popup
-            hongKongRegions.forEach(region => {
+            
                 const regionMarker = L.marker([region.lat, region.lng]).addTo(map);
                 regionMarker.bindPopup(`<b>Weather For ${region.name}</b><br>${weatherText}`);
                 markers.push(regionMarker);
