@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 **Weather Notification Slackbot for DeliveryOps**
 
 This project is a weather notification Slackbot that mainly for delivery and logistics ops. It fetches and sends real-time weather updates for three regions: Klang Valley (Malaysia), Singapore, and Hong Kong. It retrieves weather data from public APIs and sends notifications to a designated Slack channel at scheduled intervals using cron jobs. The bot also includes an interactive map feature that allows users to view weather updates on a map interface.
@@ -94,3 +95,6 @@ For any issues, questions, or suggestions, feel free to contact me through GitHu
 
 
 
+=======
+# Slackbot-Project
+>>>>>>> 6c095265 (Initial commit)
