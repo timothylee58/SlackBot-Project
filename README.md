@@ -8,42 +8,43 @@ Features
 
 Fetches weather data for Klang Valley (Malaysia), Singapore, and Hong Kong from respective government APIs such as: Malaysia Weather Warning from MET Malaysia: Data.gov.my || 2-hour weather forecast from data.gov.sg: Data.gov.sg || General weather update from Hong Kong Observatory: Hong Kong Observatory API
 
-Scheduled weather updates posted to a Slack channel at regular intervals
+- Scheduled weather updates posted to a Slack channel at regular intervals
 
-A built-in cron scheduler sends weather updates during specified periods.
+- A built-in cron scheduler sends weather updates during specified periods.
 
-Interactive Slack message with buttons linking to interactive weather maps
+- Interactive Slack message with buttons linking to interactive weather maps
 
-Cached weather data to minimize unnecessary API calls
+- Cached weather data to minimize unnecessary API calls
 
-Weather data is cached for 5 minutes to optimize API requests.
+- Weather data is cached for 5 minutes to optimize API requests.
 
-Interactive map interface for displaying weather updates based on coordinates.
+- Interactive map interface for displaying weather updates based on coordinates.
 
-Provides manual Slack notification triggers for Unit Test
+- Provides manual Slack notification triggers for Unit Test
 
-Technologies Used
+#Technologies Used
 
-Node.js: Backend framework
-Express: Web server and routing
-Axios: For HTTP requests to external APIs
-node-cron: For scheduling periodic weather notifications
-Slack API: For sending notifications to Slack
-dotenv: To manage environment variables securely
-Body-parser: For parsing incoming requests
-HTML/CSS/JS: To serve static files and maps
-Installation Guide
+- Node.js: Backend framework
+- Express: Web server and routing
+- Axios: For HTTP requests to external APIs
+- node-cron: For scheduling periodic weather notifications
+- Slack API: For sending notifications to Slack
+- dotenv: To manage environment variables securely
+- Body-parser: For parsing incoming requests
+- HTML/CSS/JS: To serve static files and maps
 
-Clone the repository:
-git clone https://github.com/timothylee58/SlackBot-Project.git
-cd SlackBot-Project
-Install the required dependencies:
-npm install
-Create a .env file in the root directory and add your own following environment variables:
-SLACK_BOT_TOKEN=slack-bot-token
-SLACK_CHANNEL_ID=slack-channel-id
-Start the Server
-npm start
+# Installation Guide
+
+1. Clone the repository:
+2. git clone https://github.com/timothylee58/SlackBot-Project.git
+3. cd SlackBot-Project
+4. Install the required dependencies:
+5. npm install
+6. Create a .env file in the root directory and add your own following environment variables:
+7. SLACK_BOT_TOKEN=slack-bot-token
+8. SLACK_CHANNEL_ID=slack-channel-id
+9. Start the Server
+10. npm start
 Usage
 
 Local Weather Map The app serves a basic static HTML file that displays weather information on a map. You can manually load the map using the following URL format: http://localhost:3000/map?lat=&lng=&zoom=
