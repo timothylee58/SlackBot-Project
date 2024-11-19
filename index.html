@@ -256,51 +256,51 @@ function fetchMalaysiaWeather() {
                  const weatherIcon = "/icon/light-rain.ico"; // Specify your weather icon path
      
                  // Function to check for region mentions in warning text
-                 function checkForAffectedRegions(text) {
-                     return affectedRegions.some(region => text.includes(region));
-                 }
-     
-                 // Loop through selected warnings and display them for cities
-                 selectedWarnings.forEach(warning => {
-                     const warningText = warning?.text_en || "No warnings currently.";
-                     const validUntil = warning?.valid_to || "Unknown";
-     
-                     // Check if the warning text contains any of the affected regions
-                     const isSelangorKLWarning = checkForAffectedRegions(warningText);
-     
-                     // Display warnings for Klang Valley
-                     KlangValleyCities.forEach(location => {
-                         const marker = L.marker(location.coordinates).addTo(map);
-                         let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}`;
-                         <a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>
-                         if (isSelangorKLWarning) {
-                             popupContent += `<br><img src="${weatherIcon}" alt="Showers icon" style="width: 50px; height: 50px;">`;
-                         }
-                         popupContent += `<br>Coordinates: ${location.coordinates[0]}, ${location.coordinates[1]}`;
-                         marker.bindPopup(popupContent);
-                     });
-     
-                     // Display warnings for Penang
-                     PenangCities.forEach(location => {
-                         const marker = L.marker(location.coordinates).addTo(map);
-                         let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}`;
-                         <a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>
-                         marker.bindPopup(popupContent);
-                     });
-     
-                     // Display warnings for other MY cities
-                     MYCities.forEach(location => {
-                         const marker = L.marker(location.coordinates).addTo(map);
-                         let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}`;
-                         <a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>
-                         marker.bindPopup(popupContent);
-                     });
+                function checkForAffectedRegions(text) {
+                 return affectedRegions.some(region => text.includes(region));
+                    }
+
+                // Loop through selected warnings and display them for cities
+                selectedWarnings.forEach(warning => {
+                  const warningText = warning?.text_en || "No warnings currently.";
+                  const validUntil = warning?.valid_to || "Unknown";
+
+                 // Check if the warning text contains any of the affected regions
+                 const isSelangorKLWarning = checkForAffectedRegions(warningText);
+
+                 // Display warnings for Klang Valley
+                 KlangValleyCities.forEach(location => {
+                 const marker = L.marker(location.coordinates).addTo(map);
+                    let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}<br>`;
+                    popupContent += '<a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>';  // Added this line here
+
+                  if (isSelangorKLWarning) {
+                 popupContent += `<br><img src="${weatherIcon}" alt="Showers icon" style="width: 50px; height: 50px;">`;
+              }
+                 popupContent += `<br>Coordinates: ${location.coordinates[0]}, ${location.coordinates[1]}`;
+                  marker.bindPopup(popupContent);
+                });
+
+                // Display warnings for Penang
+                PenangCities.forEach(location => {
+                const marker = L.marker(location.coordinates).addTo(map);
+                   let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}<br>`;
+                    popupContent += '<a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>';  // Added this line here
+                    marker.bindPopup(popupContent);
                  });
-             })
-             .catch(error => {
-                 console.error('Error fetching Malaysia weather data:', error);
+
+                // Display warnings for other MY cities
+             MYCities.forEach(location => {
+             const marker = L.marker(location.coordinates).addTo(map);
+                let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}<br>`;
+            popupContent += '<a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>';  // Added this line here
+         marker.bindPopup(popupContent);
              });
-     }
+            })
+            .catch(error => {
+            console.error('Error fetching Malaysia weather data:', error);
+                });
+
        
         // Fetch Hong Kong weather data
         function fetchHongKongWeather() {
