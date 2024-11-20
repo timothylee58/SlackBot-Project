@@ -1,8 +1,1 @@
-.env
 node_modules
-echo "frontend/" >> .gitignore
-echo "icon-svg/" >> .gitignore
-echo "icon2/" >> .gitignore
-git add .gitignore
-git commit -m "Update .gitignore"
-.vercel
