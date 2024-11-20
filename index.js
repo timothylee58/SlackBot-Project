@@ -226,52 +226,44 @@ async function sendSlackNotification() {
     }
 }
 
-// Schedule the Slack notification every 2 hours from 8 AM to 10 PM
-cron.schedule('0 8,10,12,14,16,18,20 * * *', () => {
-console.log('Running scheduled weather update (every 2 hours)...');
-sendSlackNotification();
-});
+    // Schedule the Slack notification every 2 hours from 8 AM to 10 PM
+    cron.schedule('0 8,10,12,14,16,18,20 * * *', () => {
+    console.log('Running scheduled weather update (every 2 hours)...');
+    sendSlackNotification();
+    });
 
-// Schedule the Slack notification every 30 minutes from 10 AM to 11:30 AM
-cron.schedule('*/30 10-11 * * *', () => {
-console.log('Running scheduled weather update (every 30 minutes from 10 AM to 11:30 AM)...');
-sendSlackNotification();
-});
+    // Schedule the Slack notification every 30 minutes from 10 AM to 11:30 AM
+    cron.schedule('*/30 10-11 * * *', () => {
+    console.log('Running scheduled weather update (every 30 minutes from 10 AM to 11:30 AM)...');
+    sendSlackNotification();
+    });
 
-// Schedule the Slack notification every 30 minutes from 5 PM to 6:30 PM
-cron.schedule('*/30 17-18 * * *', () => {
-console.log('Running scheduled weather update (every 30 minutes from 5 PM to 6:30 PM)...');
-sendSlackNotification();
-});
+    // Schedule the Slack notification every 30 minutes from 5 PM to 6:30 PM
+    cron.schedule('*/30 17-18 * * *', () => {
+    console.log('Running scheduled weather update (every 30 minutes from 5 PM to 6:30 PM)...');
+    sendSlackNotification();
+    });
 
-// Home route
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+    // Home route
+    app.get('/', (req, res) => {
+        res.sendFile(path.join(__dirname, 'index.html'));
+    });
 
-// Manual trigger for sending Slack notification
-app.get('/send-notification', async (req, res) => {
-    console.log('Manual Slack notification trigger...');
-    await sendSlackNotification();
-    res.send('Slack notification sent!');
-});
+    // Manual trigger for sending Slack notification
+    app.get('/send-notification', async (req, res) => {
+        console.log('Manual Slack notification trigger...');
+        await sendSlackNotification();
+        res.send('Slack notification sent!');
+    });
 
-// Serve map page with location handling
-app.get('/map', (req, res) => {
-    const lat = req.query.lat;
-    const lng = req.query.lng;
-    const zoom = req.query.zoom;
-
-    if (!lat || !lng || !zoom) {
-        return res.status(400).send('Invalid or missing parameters. Please provide lat, lng, and zoom.');
-    }
+    
 
     // Serve the HTML file for the map
     res.sendFile(path.join(__dirname, 'index.html'));
-});
+    
 
-// Start server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
+    // Start server
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+    });
 
