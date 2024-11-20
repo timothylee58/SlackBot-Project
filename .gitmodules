@@ -1,3 +1,6 @@
 [submodule "backend"]
     path = backend
-    url = <https://github.com/timothylee58/SlackBot-Project>
+	url = https://github.com/timothylee58/SlackBot-Project
+[submodule "frontend"]
+    path = frontend
+	url = https://github.com/timothylee58/SlackBot-Project
