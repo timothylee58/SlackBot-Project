@@ -256,8 +256,9 @@ console.log('Running scheduled weather update (every 30 minutes from 5 PM to 6:3
 sendSlackNotification();
 });
 
-// Apply rate limiting to a specific route
+// Apply rate limiting to specific routes
 app.use('/api/file-access', limiter);
+app.use('/map', limiter);
 
 app.get('/api/file-access', (req, res) => {
   res.send('File system accessed successfully!');
@@ -288,4 +289,3 @@ app.get('/map', (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
-
