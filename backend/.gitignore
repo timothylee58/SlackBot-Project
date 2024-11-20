@@ -6,3 +6,5 @@ echo "icon2/" >> .gitignore
 git add .gitignore
 git commit -m "Update .gitignore"
 .vercel
+
+".env" 
