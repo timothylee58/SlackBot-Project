@@ -39,7 +39,6 @@ const locations = {
     }
 };
 
-
 // API keys and Slack channel info
 const slackToken = process.env.SLACK_BOT_TOKEN;
 const channelId = process.env.SLACK_CHANNEL_ID;
@@ -110,7 +109,7 @@ async function prepareSlackMessage() {
     const hongKongData = await formatLocationData(await fetchWeatherData('hong-kong'), 'hong-kong');
 
     const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-    const mapUrlSG = `${BASE_URL}`; // Default locate for Singapore's map 
+    const mapUrlSG = `${BASE_URL}/map?lat=1.3521&lng=103.8198&zoom=10`; // Only Singapore's map link will be used
 
     return {
         blocks: [
@@ -207,8 +206,8 @@ return {
 // Send Slack notification function
 async function sendSlackNotification() {
     try {
-        console.log('Triggered weather update via cron job...');
         const formattedSlackMessage = await prepareSlackMessage();
+
         console.log('Formatted Slack Message:', JSON.stringify(formattedSlackMessage, null, 2));
 
         // Post the message with the weather data
@@ -219,44 +218,58 @@ async function sendSlackNotification() {
         });
 
         console.log('Message sent successfully:', response);
-        res.status(200).json({ message: 'Weather update sent successfully', data: response });
+
     } catch (error) {
         console.error('Error sending Slack message:', error.message);
-        res.status(500).json({ error: 'Failed to send weather update' });
     }
 }
 
-    // Schedule the Slack notification every 2 hours from 8 AM to 10 PM
-    cron.schedule('0 8,10,12,14,16,18,20 * * *', () => {
-    console.log('Running scheduled weather update (every 2 hours)...');
-    sendSlackNotification();
-    });
+// Schedule the Slack notification every 2 hours from 8 AM to 10 PM
+cron.schedule('0 8,10,12,14,16,18,20 * * *', () => {
+console.log('Running scheduled weather update (every 2 hours)...');
+sendSlackNotification();
+});
 
-    // Schedule the Slack notification every 30 minutes from 10 AM to 11:30 AM
-    cron.schedule('*/30 10-11 * * *', () => {
-    console.log('Running scheduled weather update (every 30 minutes from 10 AM to 11:30 AM)...');
-    sendSlackNotification();
-    });
+// Schedule the Slack notification every 30 minutes from 10 AM to 11:30 AM
+cron.schedule('*/30 10-11 * * *', () => {
+console.log('Running scheduled weather update (every 30 minutes from 10 AM to 11:30 AM)...');
+sendSlackNotification();
+});
 
-    // Schedule the Slack notification every 30 minutes from 5 PM to 6:30 PM
-    cron.schedule('*/30 17-18 * * *', () => {
-    console.log('Running scheduled weather update (every 30 minutes from 5 PM to 6:30 PM)...');
-    sendSlackNotification();
-    });
+// Schedule the Slack notification every 30 minutes from 5 PM to 6:30 PM
+cron.schedule('*/30 17-18 * * *', () => {
+console.log('Running scheduled weather update (every 30 minutes from 5 PM to 6:30 PM)...');
+sendSlackNotification();
+});
 
-    // Home route
-    app.get('/', (req, res) => {
-        res.sendFile(path.join(__dirname, 'index.html'));
-    });
+// Home route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-    // Manual trigger for sending Slack notification
-    app.get('/send-notification', async (req, res) => {
-        console.log('Manual Slack notification trigger...');
-        await sendSlackNotification();
-        res.send('Slack notification sent!');
-    }); 
-    // Start server
-    app.listen(port, () => {
-        console.log(`Server is running on http://localhost:${port}`);
-    });
+// Manual trigger for sending Slack notification
+app.get('/send-notification', async (req, res) => {
+    console.log('Manual Slack notification trigger...');
+    await sendSlackNotification();
+    res.send('Slack notification sent!');
+});
+
+// Serve map page with location handling
+app.get('/map', (req, res) => {
+    const lat = req.query.lat;
+    const lng = req.query.lng;
+    const zoom = req.query.zoom;
+
+    if (!lat || !lng || !zoom) {
+        return res.status(400).send('Invalid or missing parameters. Please provide lat, lng, and zoom.');
+    }
+
+    // Serve the HTML file for the map
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Start server
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+});
 
