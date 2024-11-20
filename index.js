@@ -39,10 +39,6 @@ const locations = {
     }
 };
 
-// /api/weather-update.js
-const { WebClient } = require('@slack/web-api');
-const { fetchWeatherData, formatLocationData, prepareSlackMessage } = require('../utils/weather'); // Ensure modular structure
-require('dotenv').config();
 
 // API keys and Slack channel info
 const slackToken = process.env.SLACK_BOT_TOKEN;
