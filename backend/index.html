@@ -323,7 +323,11 @@ function fetchMalaysiaWeather() {
                 .then(([regionalData, flwData]) => {
                     // Process regional weather data
                     const weatherData = {
-                    region: regionalData.generalSituation?.data[0]?.value || 'Unknown', 
+                        generalSituation: regionalData.generalSituation || 'Available Soon',
+                        tcInfo: regionalData.tcInfo || 'No typhoon warnings',
+                        forecastPeriod: regionalData.weatherForecast?.forecastPeriod || 'Available Soon',
+                        forecastDesc: regionalData.weatherForecast?.forecastDesc || 'Available Soon',
+                        outlook: regionalData.weatherForecast?.outlook || 'Available Soon',
                         maxTemp: regionalData.temperature?.data[0]?.value || 'Unknown',
                         minTemp: regionalData.temperature?.data[1]?.value || 'Unknown',
                         weatherIconId: regionalData.icon[0] || '0'
