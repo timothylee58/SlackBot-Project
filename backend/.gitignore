@@ -1,4 +1,4 @@
-.env
+config.json
 node_modules
 echo "frontend/" >> .gitignore
 echo "icon-svg/" >> .gitignore
