@@ -109,7 +109,7 @@ async function prepareSlackMessage() {
     const hongKongData = await formatLocationData(await fetchWeatherData('hong-kong'), 'hong-kong');
 
     const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-    const mapUrlSG = `${BASE_URL}/map?lat=1.3521&lng=103.8198&zoom=10`; // Only Singapore's map link will be used
+    const mapUrlSG = `${BASE_URL}`; //Default locate Singapore map
 
     return {
         blocks: [
