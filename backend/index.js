@@ -4,10 +4,21 @@ const cron = require('node-cron');
 const { WebClient } = require('@slack/web-api');
 const path = require('path');
 const bodyParser = require('body-parser'); 
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
 const port = 3000;
+
+// Set up rate limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per window
+    message: {
+      status: 429,
+      error: "Too many requests. Please try again after 15 minutes."
+    }
+  });
 
 // Middleware to parse JSON
 app.use(express.json());
@@ -16,6 +27,8 @@ app.use(bodyParser.json({ limit: '50mb' })); // Increase limit if necessary
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
+
+
 
 // Define locations
 const locations = {
@@ -43,6 +56,7 @@ const locations = {
 const slackToken = process.env.SLACK_BOT_TOKEN;
 const channelId = process.env.SLACK_CHANNEL_ID;
 const slackClient = new WebClient(slackToken);
+
 
 // Cache structure for weather data
 let weatherCache = {
@@ -242,9 +256,11 @@ console.log('Running scheduled weather update (every 30 minutes from 5 PM to 6:3
 sendSlackNotification();
 });
 
-// Home route
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// Apply rate limiting to a specific route
+app.use('/api/file-access', limiter);
+
+app.get('/api/file-access', (req, res) => {
+  res.send('File system accessed successfully!');
 });
 
 // Manual trigger for sending Slack notification
