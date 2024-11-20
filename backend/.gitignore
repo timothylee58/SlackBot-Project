@@ -6,3 +6,7 @@ echo "icon2/" >> .gitignore
 git add .gitignore
 git commit -m "Update .gitignore"
 .vercel
+<<<<<<< HEAD
+=======
+
+>>>>>>> ed7f5df59ac099e5f3db58a9974cb3b797287416
