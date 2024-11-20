@@ -1,4 +1,4 @@
-import { sendSlackNotification } from '../slackNotifier';
+import { sendSlackNotification } from '../index';
 
 export default async function handler(req, res) {
     try {
