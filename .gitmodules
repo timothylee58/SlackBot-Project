@@ -4,3 +4,6 @@
 [submodule "frontend"]
     path = frontend
 	url = https://github.com/timothylee58/SlackBot-Project
+[submodule "node-js-getting-started"]
+    path = node-js-getting-started
+    url = https://github.com/timothylee58/SlackBot-Project
