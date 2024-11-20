@@ -256,12 +256,12 @@ async function sendSlackNotification() {
         res.send('Slack notification sent!');
     });
 
-    
-
     // Serve the HTML file for the map
     res.sendFile(path.join(__dirname, 'index.html'));
     
 
+    
+    
     // Start server
     app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`);
