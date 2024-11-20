@@ -118,6 +118,8 @@
 
         // Get validated latitude, longitude, and zoom
         const { lat, lng, zoom } = getQueryParams();
+    
+
 
 
 // Fetch Singapore weather data with icons
@@ -154,7 +156,7 @@ function fetchSingaporeWeather() {
                 }else if (forecast.forecast && forecast.forecast.includes('Sunny')) {
                     weatherIcon = '/icon/sunny.ico';
                 }
-            
+
                 const marker = L.marker(area.coordinates).addTo(map);
                 markers.push(marker);
 
@@ -179,6 +181,7 @@ function fetchSingaporeWeather() {
             });
         });
 }
+
 
 // Fetch weather warnings for Malaysia
 function fetchMalaysiaWeather() {
@@ -254,8 +257,8 @@ function fetchMalaysiaWeather() {
      
                  // Function to check for region mentions in warning text
                  function checkForAffectedRegions(text) {
-                    return affectedRegions.some(region => text.includes(region));
-                }
+                     return affectedRegions.some(region => text.includes(region));
+                 }
      
                  // Loop through selected warnings and display them for cities
                  selectedWarnings.forEach(warning => {
@@ -266,19 +269,19 @@ function fetchMalaysiaWeather() {
                      const isSelangorKLWarning = checkForAffectedRegions(warningText);
      
                     // Display warnings for Klang Valley
-                     KlangValleyCities.forEach(location => {
-                       const marker = L.marker(location.coordinates).addTo(map);
-                       let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}<br>`;
-                        if (isSelangorKLWarning) {
-                    popupContent += `<br><img src="${weatherIcon}" alt="Showers icon" style="width: 50px; height: 50px;">`;
-                       }
-                       popupContent += `<br>Coordinates: ${location.coordinates[0]}, ${location.coordinates[1]}<br>`;
-                       popupContent += '<a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>';
-               marker.bindPopup(popupContent);
-                 });
+                    KlangValleyCities.forEach(location => {
+                        const marker = L.marker(location.coordinates).addTo(map);
+                        let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}`;
+                         if (isSelangorKLWarning) {
+                     popupContent += `<br><img src="${weatherIcon}" alt="Showers icon" style="width: 50px; height: 50px;">`;
+                        }
+                        popupContent += `<br>Coordinates: ${location.coordinates[0]}, ${location.coordinates[1]}<br>`;
+                        popupContent += '<a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>';
+                marker.bindPopup(popupContent);
+                  });
      
-                      // Display warnings for Penang
-                      PenangCities.forEach(location => {
+                     // Display warnings for Penang
+                     PenangCities.forEach(location => {
                         const marker = L.marker(location.coordinates).addTo(map);
                         let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}<br>`;
                         popupContent += '<a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>';  // Added this line here
@@ -298,7 +301,7 @@ function fetchMalaysiaWeather() {
                  console.error('Error fetching Malaysia weather data:', error);
              });
      }
-    
+       
         // Fetch Hong Kong weather data
         function fetchHongKongWeather() {
             // Fetch real-time regional weather data
@@ -396,7 +399,7 @@ function fetchMalaysiaWeather() {
                 locationData[location].fetchFunc();
             }
         }
-    
+
          // Clear existing markers
             function clearMarkers() {
             markers.forEach(marker => map.removeLayer(marker));
