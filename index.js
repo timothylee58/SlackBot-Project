@@ -39,6 +39,11 @@ const locations = {
     }
 };
 
+// /api/weather-update.js
+const { WebClient } = require('@slack/web-api');
+const { fetchWeatherData, formatLocationData, prepareSlackMessage } = require('../utils/weather'); // Ensure modular structure
+require('dotenv').config();
+
 // API keys and Slack channel info
 const slackToken = process.env.SLACK_BOT_TOKEN;
 const channelId = process.env.SLACK_CHANNEL_ID;
@@ -206,8 +211,8 @@ return {
 // Send Slack notification function
 async function sendSlackNotification() {
     try {
+        console.log('Triggered weather update via cron job...');
         const formattedSlackMessage = await prepareSlackMessage();
-
         console.log('Formatted Slack Message:', JSON.stringify(formattedSlackMessage, null, 2));
 
         // Post the message with the weather data
@@ -218,9 +223,10 @@ async function sendSlackNotification() {
         });
 
         console.log('Message sent successfully:', response);
-
+        res.status(200).json({ message: 'Weather update sent successfully', data: response });
     } catch (error) {
         console.error('Error sending Slack message:', error.message);
+        res.status(500).json({ error: 'Failed to send weather update' });
     }
 }
 
