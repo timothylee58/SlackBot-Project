@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
-const cron = require('node-cron');
-const { WebClient } = require('@slack/web-api');
+const cron = require('node-cron') || require('./cron-schedule');
+const { WebClient } = require('@slack/web-api'); 
 const path = require('path');
 const bodyParser = require('body-parser'); 
 const rateLimit = require('express-rate-limit');
