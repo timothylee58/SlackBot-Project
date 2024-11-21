@@ -180,7 +180,7 @@ if (weatherData.error) {
 
 switch (locationKey) {
     case 'klang-valley':
-        const warningIssue = weatherData[2].warning_issue;
+        const warningIssue = weatherData[2]?.warning_issue || {};
         weatherText = `*Warning Issue:* ${warningIssue.title_en || 'Available Soon'}\n` +
                       `*Issued:* ${warningIssue.issued || 'Available Soon'}\n` +
                       `*Valid To:* ${weatherData[2].valid_to || 'Available Soon'}\n` +
@@ -193,13 +193,13 @@ switch (locationKey) {
             "Pasir Ris", "Woodlands"
         ];
         
-        const sgForecasts = weatherData.items[0].forecasts
-            .filter(item => selectedAreas.includes(item.area))
-            .map(item => `Area: ${item.area} - Forecast: ${item.forecast}`)
-            .join('\n');
-        
-        weatherText = sgForecasts || 'No forecasts available';
-        break;
+        const sgForecasts = weatherData.items?.[0]?.forecasts
+        ?.filter(item => selectedAreas.includes(item.area))
+        .map(item => `Area: ${item.area} - Forecast: ${item.forecast}`)
+        .join('\n') || 'No forecasts available';
+    weatherText = sgForecasts;
+    break;
+
     case 'hong-kong':
         weatherText = `*General Situation:* ${weatherData.generalSituation || 'Available Soon'}\n` +
                       `*Typhoon Info:* ${weatherData.tcInfo || 'No typhoon warnings'}\n` +
@@ -215,6 +215,7 @@ return {
 }    
 // Send Slack notification function
 async function sendSlackNotification() {
+    const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'; // Fallback to localhost
     try {
         const formattedSlackMessage = await prepareSlackMessage();
 
