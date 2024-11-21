@@ -4,10 +4,20 @@ const cron = require('node-cron');
 const { WebClient } = require('@slack/web-api');
 const path = require('path');
 const bodyParser = require('body-parser'); 
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
 const port = 3000;
+
+// Rate limiter configuration
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+});
+
+// Apply rate limiter to all requests
+app.use(limiter);
 
 // Middleware to parse JSON
 app.use(express.json());
