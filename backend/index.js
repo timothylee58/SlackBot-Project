@@ -10,6 +10,11 @@ require('dotenv').config();
 const app = express();
 const port = 3000;
 
+app.set('trust proxy', 1); // 1 indicates trusting a single proxy, like Render
+
+// Set a timeout for server responses
+server.timeout = 0; // Unlimited timeout
+
 // Rate limiter configuration
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
