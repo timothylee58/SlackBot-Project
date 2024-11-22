@@ -12,6 +12,10 @@ const port = 3000;
 
 app.set('trust proxy', 1); // 1 indicates trusting a single proxy, like Render
 
+// Start server
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+});
 // Set a timeout for server responses
 server.timeout = 0; // Unlimited timeout
 
@@ -266,8 +270,5 @@ app.get('/map', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Start server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
+
 
