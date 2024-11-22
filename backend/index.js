@@ -61,6 +61,7 @@ const locations = {
 // API keys and Slack channel info
 const slackToken = process.env.SLACK_BOT_TOKEN;
 const channelId = process.env.SLACK_CHANNEL_ID;
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'; 
 const slackClient = new WebClient(slackToken);
 
 // Cache structure for weather data
@@ -89,7 +90,7 @@ async function fetchWeatherData(locationKey) {
     let apiUrl;
     switch (locationKey) {
         case 'klang-valley':
-            apiUrl = 'https://api.data.gov.my/weather/warning?limit=3';
+            apiUrl = 'https://api.data.gov.my/weather/warning?limit=3'; 
             break;
         case 'singapore':
             apiUrl = 'https://api.data.gov.sg/v1/environment/2-hour-weather-forecast';
@@ -126,8 +127,6 @@ async function prepareSlackMessage() {
     const malaysiaData = await formatLocationData(await fetchWeatherData('klang-valley'), 'klang-valley');
     const singaporeData = await formatLocationData(await fetchWeatherData('singapore'), 'singapore');
     const hongKongData = await formatLocationData(await fetchWeatherData('hong-kong'), 'hong-kong');
-
-    const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
     const mapUrlSG = `${BASE_URL}`;
 
     return {
@@ -224,7 +223,7 @@ return {
 }    
 // Send Slack notification function
 async function sendSlackNotification() {
-    const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'; // Fallback to localhost
+    // Fallback to localhost
     try {
         const formattedSlackMessage = await prepareSlackMessage();
 
