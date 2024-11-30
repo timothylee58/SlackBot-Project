@@ -194,12 +194,15 @@ switch (locationKey) {
                       `*Valid To:* ${weatherData[2].valid_to || 'Available Soon'}\n` +
                       `*Description:* ${weatherData[2].text_en || 'Available Soon'}`;
         break;
-    case 'singapore':
-        const selectedAreas = [
-            "Ang Mo Kio", "Toa Payoh", "Changi", "City",
-            "Jurong East", "Jurong West", "Tuas", "Kallang",
-            "Pasir Ris", "Woodlands"
-        ];
+   case 'singapore':
+    const selectedAreas = [
+        "Ang Mo Kio", "Toa Payoh", "Changi", "City",
+        "Jurong East", "Jurong West", "Tuas", "Kallang",
+        "Pasir Ris", "Woodlands",
+        "Bukit Merah", "Bukit Panjang", "Bukit Timah",
+        "Serangoon", "Sengkang", "Yishun",
+        "Marine Parade", "Bedok", "Clementi"
+    ];
         
         const sgForecasts = weatherData.items?.[0]?.forecasts
         ?.filter(item => selectedAreas.includes(item.area))
