@@ -79,7 +79,22 @@ const singaporeAreas = [
     { area: "Yishun", coordinates: [1.4304, 103.8354] },
     { area: "Marine Parade", coordinates: [1.3009, 103.8992] },
     { area: "Bedok", coordinates: [1.3236, 103.9304] },
-    { area: "Clementi", coordinates: [1.3151, 103.7643] }
+    { area: "Clementi", coordinates: [1.3151, 103.7643] },
+    { area: "Tampines", coordinates: [1.3496, 103.9568] },
+    { area: "Queenstown", coordinates: [1.2942, 103.7861] },
+    { area: "Geylang", coordinates: [1.3201, 103.8918] },
+    { area: "Hougang", coordinates: [1.3612, 103.8863] },
+    { area: "Punggol", coordinates: [1.3984, 103.9072] },
+    { area: "Sembawang", coordinates: [1.4491, 103.8185] },
+    { area: "Novena", coordinates: [1.3204, 103.8438] },
+    { area: "Bishan", coordinates: [1.3526, 103.8352] },
+    { area: "Tengah", coordinates: [1.3648, 103.7095] },
+    { area: "Sentosa", coordinates: [1.2494, 103.8303] },
+    { area: "Pulau Ubin", coordinates: [1.4044, 103.9625] },
+    { area: "Mandai", coordinates: [1.4043, 103.8066] },
+    { area: "Jurong Island", coordinates: [1.2660, 103.6991] },
+    { area: "Lim Chu Kang", coordinates: [1.4305, 103.7178] },
+    { area: "Choa Chu Kang", coordinates: [1.3840, 103.7470] }
 ];
 
 // Hong Kong regions
@@ -313,7 +328,11 @@ function formatLocationData(weatherData, locationKey, trafficData = []) {
             break;
 
         case 'singapore':
-            const selectedAreas = ["Ang Mo Kio", "Changi", "City", "Jurong East", "Tuas"];
+            const selectedAreas = [
+                "Ang Mo Kio", "Changi", "City", "Jurong East", "Jurong West", "Tuas",
+                "Toa Payoh", "Kallang", "Pasir Ris", "Woodlands", "Bedok", "Clementi",
+                "Bukit Merah", "Bukit Panjang", "Bukit Timah", "Serangoon", "Sengkang", "Yishun"
+            ];
             weatherText = weatherData.items?.[0]?.forecasts
                 ?.filter(item => selectedAreas.includes(item.area))
                 .map(item => `• ${item.area}: ${item.forecast}`)
