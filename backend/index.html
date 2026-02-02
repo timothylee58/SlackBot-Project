@@ -123,282 +123,168 @@
 
 
 // Fetch Singapore weather data with icons
-function fetchSingaporeWeather() {
-    const singaporeAreas = [
-        { area: "City", coordinates: [1.2830, 103.8514] },
-        { area: "Changi", coordinates: [1.3644, 103.9915] },
-        { area: "Toa Payoh", coordinates: [1.3346, 103.8560] },
-        { area: "Ang Mo Kio", coordinates: [1.3691, 103.8454] },
-        { area: "Jurong West", coordinates: [1.3404, 103.7064] },
-        { area: "Jurong East", coordinates: [1.3324, 103.7438] },
-        { area: "Kallang", coordinates: [1.3088, 103.8610] },
-        { area: "Pasir Ris", coordinates: [1.3731, 103.9495] },
-        { area: "Tuas", coordinates: [1.3214, 103.6490] },
-        { area: "Woodlands", coordinates: [1.4360, 103.7863] },
-        { area: "Bukit Merah", coordinates: [1.2830, 103.8000] },
-        { area: "Bukit Panjang", coordinates: [1.3932, 103.7795] },   
-        { area: "Bukit Timah", coordinates: [1.3323, 103.7852] }, 
-        { area: "Serangoon", coordinates: [1.3532, 103.8700] },   
-        { area: "Sengkang", coordinates: [1.3913, 103.8951] },    
-        { area: "Yishun", coordinates: [1.4304, 103.8354] },      
-        { area: "Marine Parade", coordinates: [1.3009, 103.8992] },   
-        { area: "Bedok", coordinates: [1.3236, 103.9304] },       
-        { area: "Clementi", coordinates: [1.3151, 103.7643] },    
-    ];
+async function fetchSingaporeWeather() {
+    try {
+        // Fetch location data and weather from backend API
+        const [locationsRes, weatherRes, trafficRes] = await Promise.all([
+            fetch('/api/locations'),
+            fetch('/api/weather/singapore'),
+            fetch('/api/traffic/singapore')
+        ]);
+        
+        const locationsData = await locationsRes.json();
+        const weatherData = await weatherRes.json();
+        const trafficData = await trafficRes.json();
+        
+        const singaporeAreas = locationsData.singaporeAreas;
+        const forecasts = weatherData.weather?.items?.[0]?.forecasts || [];
+        const trafficIncidents = trafficData.traffic || [];
+        
+        singaporeAreas.forEach(area => {
+            const forecast = forecasts.find(f => f.area && f.area.includes(area.area)) || {};
 
-    fetch('https://api.data.gov.sg/v1/environment/2-hour-weather-forecast')
-        .then(response => response.json())
-        .then(data => {
-            singaporeAreas.forEach(area => {
-                const forecast = data.items[0].forecasts.find(f => f.area && f.area.includes(area.area)) || {};
+            // Select an icon based on forecast description
+            let weatherIcon = '/icon/cloudy-sunny.ico';
+            if (forecast.forecast?.includes('Cloudy')) {
+                weatherIcon = '/icon/cloudy.ico';
+            } else if (forecast.forecast?.includes('Thundery Showers')) {
+                weatherIcon = '/icon/thunderstorm.ico';
+            } else if (forecast.forecast?.includes('Light Rain') || forecast.forecast?.includes('Showers')) {
+                weatherIcon = '/icon/light-rain.ico';
+            } else if (forecast.forecast?.includes('Sunny')) {
+                weatherIcon = '/icon/sunny.ico';
+            }
 
-                // Select an icon based on forecast description
-                let weatherIcon = '/icon/cloudy-sunny.ico';  // Fallback icon
-                if (forecast.forecast && forecast.forecast.includes('Cloudy')) {
-                    weatherIcon = '/icon/cloudy.ico';
-                } else if (forecast.forecast && forecast.forecast.includes('Thundery Showers')) {
-                    weatherIcon = '/icon/thunderstorm.ico';
-                } else if (forecast.forecast && forecast.forecast.includes('Light Rain')) {
-                    weatherIcon = '/icon/light-rain.ico';
-                } else if (forecast.forecast && forecast.forecast.includes('Showers')) {
-                    weatherIcon = '/icon/light-rain.ico';
-                }else if (forecast.forecast && forecast.forecast.includes('Sunny')) {
-                    weatherIcon = '/icon/sunny.ico';
-                }
+            const marker = L.marker(area.coordinates).addTo(map);
+            markers.push(marker);
 
-                const marker = L.marker(area.coordinates).addTo(map);
-                markers.push(marker);
+            // Traffic status indicator
+            const trafficStatus = trafficIncidents.length > 0 
+                ? `🔴 ${trafficIncidents.length} incident(s)` 
+                : '🟢 Smooth flow';
 
-                // Safely bind the popup with the forecast and icon
-                marker.bindPopup(`
-                    <b>Singapore (${area.area})</b><br>
-                    <img src="${weatherIcon}" alt="Weather Icon" style="width:50px;"><br>
-                    ${forecast.forecast || "Forecast Data Available Soon"}<br>
-                    Last Updated: ${data.items[0]?.update_timestamp || "Unknown"}
-                `);
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching Singapore weather data:', error);
-            singaporeAreas.forEach(area => {
-                const marker = L.marker(area.coordinates).addTo(map);
-                marker.bindPopup(`
-                    <b>Singapore (${area.area})</b><br>
-                    Unable to fetch weather data.<br>
-                `);
-                markers.push(marker);
-            });
+            marker.bindPopup(`
+                <b>Singapore (${area.area})</b><br>
+                <img src="${weatherIcon}" alt="Weather Icon" style="width:50px;"><br>
+                ${forecast.forecast || "Forecast Data Available Soon"}<br>
+                <b>Traffic:</b> ${trafficStatus}<br>
+                Last Updated: ${weatherData.weather?.items?.[0]?.update_timestamp || "Unknown"}
+            `);
         });
+    } catch (error) {
+        console.error('Error fetching Singapore data:', error);
+        // Fallback: show error markers
+        const defaultAreas = [
+            { area: "City", coordinates: [1.2830, 103.8514] },
+            { area: "Changi", coordinates: [1.3644, 103.9915] }
+        ];
+        defaultAreas.forEach(area => {
+            const marker = L.marker(area.coordinates).addTo(map);
+            marker.bindPopup(`<b>Singapore (${area.area})</b><br>Unable to fetch data.`);
+            markers.push(marker);
+        });
+    }
 }
 
 
 // Fetch weather warnings for Malaysia
-function fetchMalaysiaWeather() {
-    fetch('https://api.data.gov.my/weather/warning?limit=3')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Check if the data is valid and contains an array of warnings
-            if (!data || (!Array.isArray(data) && !Array.isArray(data.data))) {
-                console.error('Invalid data format or no warnings available:', data);
-                return;
-            }
-
-            // Extract weather warnings array
-            const weatherWarnings = Array.isArray(data) ? data : data.data;
-            
-            // Select warnings starting from index 0
-            const selectedWarnings = weatherWarnings.slice(2);
-            
-            // Define Klang Valley cities and affected regions
-            const KlangValleyCities = [
-                { city: "Kuala Lumpur", coordinates: [3.1390, 101.6869] },
-                { city: "Petaling Jaya", coordinates: [3.1073, 101.6067] },
-                { city: "Subang Jaya", coordinates: [3.0818, 101.5745] },
-                { city: "Shah Alam", coordinates: [3.0738, 101.5183] },
-                { city: "Puchong", coordinates: [3.0331, 101.6220] },
-                { city: "Cheras", coordinates: [3.0851, 101.7441] },
-                { city: "Ampang", coordinates: [3.1579, 101.7530] },
-                { city: "Gombak", coordinates: [3.2910, 101.6744] },
-                { city: "Bangi", coordinates: [2.9178, 101.7739] },
-                { city: "Kajang", coordinates: [2.9936, 101.7875] },
-                { city: "Sungai Buloh", coordinates: [3.2115, 101.5742] },
-                { city: "Putrajaya", coordinates: [2.9264, 101.6964] },
-                { city: "Klang", coordinates: [3.0333, 101.4492] },
-                { city: "Seri Kembangan", coordinates: [3.0260, 101.7035] },
-                { city: "Selayang", coordinates: [3.2656, 101.6506] },
-                { city: "Setia Alam", coordinates: [3.1020, 101.4587] },
-                { city: "Damansara", coordinates: [3.1434, 101.6097] },    
-                { city: "Batu Caves", coordinates: [3.2379, 101.6841] }, 
-                { city: "Kepong", coordinates: [3.2187, 101.6505] },     
-                { city: "Setapak", coordinates: [3.2119, 101.7269] },      
-                ];
-              const PenangCities = [
-                // Penang region
-                { city: "George Town", coordinates: [5.4141, 100.3288] },
-                { city: "Bayan Lepas", coordinates: [5.3012, 100.2761] },
-                { city: "Butterworth", coordinates: [5.4053, 100.3682] },
-                { city: "Tanjung Tokong", coordinates: [5.4371, 100.3028] },
-                { city: "Tanjung Bungah", coordinates: [5.4325, 100.3057] },
-                { city: "Gelugor", coordinates: [5.3806, 100.3190] },
-                { city: "Sungai Dua", coordinates: [5.3845, 100.3188] },
-                { city: "Perai", coordinates: [5.4025, 100.3793] },
-                { city: "Seberang Perai", coordinates: [5.3671, 100.3997] },
-                { city: "Balik Pulau", coordinates: [5.3371, 100.1692] },
-                { city: "Air Itam", coordinates: [5.4110, 100.2939] },
-                { city: "Bukit Mertajam", coordinates: [5.3561, 100.4763] },
-                ];
-  
-                 // Additional cities 
-                 const MYCities = [
-                 { city: "Kuantan", coordinates: [3.8070, 103.3200] },
-                 { city: "Kota Bharu", coordinates: [6.1294, 102.2393] },
-                 { city: "Johor Bahru", coordinates: [1.4929, 103.7414] },
-                 { city: "Muar", coordinates: [2.0427, 102.5528] },
-                 { city: "Seremban", coordinates: [2.7297, 101.9381] },
-                 { city: "Batu Pahat", coordinates: [1.8541, 102.9325] },
-                 { city: "Ipoh", coordinates: [4.5961, 101.0901] },
-                 { city: "Melaka", coordinates: [2.1896, 102.2540] }
-                 ];
-
-                 const affectedRegions = ["Hulu Selangor", "Gombak", "Petaling", "Hulu Langat", "FT Kuala Lumpur"];
-                 const weatherIcon = "/icon/light-rain.ico"; // Specify your weather icon path
-     
-                 // Function to check for region mentions in warning text
-                 function checkForAffectedRegions(text) {
-                     return affectedRegions.some(region => text.includes(region));
-                 }
-     
-                 // Loop through selected warnings and display them for cities
-                 selectedWarnings.forEach(warning => {
-                     const warningText = warning?.text_en || "No warnings currently.";
-                     const validUntil = warning?.valid_to || "Unknown";
-     
-                     // Check if the warning text contains any of the affected regions
-                     const isSelangorKLWarning = checkForAffectedRegions(warningText);
-     
-                     // Display warnings for Klang Valley
-                     KlangValleyCities.forEach(location => {
-                         const marker = L.marker(location.coordinates).addTo(map);
-                         let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}`;
-                         if (isSelangorKLWarning) {
-                             popupContent += `<br><img src="${weatherIcon}" alt="Showers icon" style="width: 50px; height: 50px;">`;
-                         }
-                         popupContent += `<br>Coordinates: ${location.coordinates[0]}, ${location.coordinates[1]}<br>`;
-                         popupContent += '<a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>';  // Added this line here
-                         marker.bindPopup(popupContent);
-                     });
-     
-                     // Display warnings for Penang
-                     PenangCities.forEach(location => {
-                         const marker = L.marker(location.coordinates).addTo(map);
-                         let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}<br>`;
-                         popupContent += '<a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>';  // Added this line here
-                         marker.bindPopup(popupContent);
-                     });
-     
-                     // Display warnings for other MY cities
-                     MYCities.forEach(location => {
-                         const marker = L.marker(location.coordinates).addTo(map);
-                         let popupContent = `<b>${location.city}</b><br>${warningText}<br>Valid Until: ${validUntil}<br>`;
-                         popupContent += '<a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>';  // Added this line here
-                         marker.bindPopup(popupContent);
-                     });
-                 });
-             })
-             .catch(error => {
-                 console.error('Error fetching Malaysia weather data:', error);
-             });
-     }
+async function fetchMalaysiaWeather() {
+    try {
+        const [locationsRes, weatherRes] = await Promise.all([
+            fetch('/api/locations'),
+            fetch('/api/weather/klang-valley')
+        ]);
+        
+        const locationsData = await locationsRes.json();
+        const weatherData = await weatherRes.json();
+        
+        const klangValleyCities = locationsData.klangValleyCities;
+        const warnings = weatherData.weather || [];
+        const selectedWarnings = Array.isArray(warnings) ? warnings.slice(2) : [];
+        
+        const affectedRegions = ["Hulu Selangor", "Gombak", "Petaling", "Hulu Langat", "FT Kuala Lumpur"];
+        const weatherIcon = "/icon/light-rain.ico";
+        
+        function checkForAffectedRegions(text) {
+            return affectedRegions.some(region => text.includes(region));
+        }
+        
+        if (selectedWarnings.length === 0) {
+            // No warnings - show stable weather
+            klangValleyCities.forEach(location => {
+                const marker = L.marker(location.coordinates).addTo(map);
+                marker.bindPopup(`
+                    <b>${location.city}</b><br>
+                    🟢 No weather warnings<br>
+                    <a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>
+                `);
+                markers.push(marker);
+            });
+        } else {
+            selectedWarnings.forEach(warning => {
+                const warningText = warning?.text_en || "No warnings currently.";
+                const validUntil = warning?.valid_to || "Unknown";
+                const isSelangorKLWarning = checkForAffectedRegions(warningText);
+                
+                klangValleyCities.forEach(location => {
+                    const marker = L.marker(location.coordinates).addTo(map);
+                    let popupContent = `<b>${location.city}</b><br>🔴 ${warningText}<br>Valid Until: ${validUntil}`;
+                    if (isSelangorKLWarning) {
+                        popupContent += `<br><img src="${weatherIcon}" alt="Weather icon" style="width: 50px; height: 50px;">`;
+                    }
+                    popupContent += `<br><a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>`;
+                    marker.bindPopup(popupContent);
+                    markers.push(marker);
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching Malaysia weather data:', error);
+    }
+}
        
         // Fetch Hong Kong weather data
-        function fetchHongKongWeather() {
-            // Fetch real-time regional weather data
-            const regionalWeatherAPI = fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en');
-            // Fetch forecast for local waters (FLW)
-            const flwWeatherAPI = fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=en');
+async function fetchHongKongWeather() {
+    try {
+        const [locationsRes, weatherRes, trafficRes] = await Promise.all([
+            fetch('/api/locations'),
+            fetch('/api/weather/hong-kong'),
+            fetch('/api/traffic/hong-kong')
+        ]);
         
-            // Use Promise.all to handle both fetches simultaneously
-            Promise.all([regionalWeatherAPI, flwWeatherAPI])
-                .then(responses => {
-                    // Ensure both requests are successful
-                    return Promise.all(responses.map(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    }));
-                })
-                .then(([regionalData, flwData]) => {
-                    // Process regional weather data
-                    const weatherData = {
-                        generalSituation: regionalData.generalSituation || 'Available Soon',
-                        tcInfo: regionalData.tcInfo || 'No typhoon warnings',
-                        forecastPeriod: regionalData.weatherForecast?.forecastPeriod || 'Available Soon',
-                        forecastDesc: regionalData.weatherForecast?.forecastDesc || 'Available Soon',
-                        outlook: regionalData.weatherForecast?.outlook || 'Available Soon',
-                        maxTemp: regionalData.temperature?.data[0]?.value || 'Unknown',
-                        minTemp: regionalData.temperature?.data[1]?.value || 'Unknown',
-                        weatherIconId: regionalData.icon[0] || '0'
-                    };
+        const locationsData = await locationsRes.json();
+        const weatherData = await weatherRes.json();
+        const trafficData = await trafficRes.json();
         
-                    // Process FLW weather data
-                    const flwWeatherData = {
-                        localWatersForecast: flwData.forecastContent || 'Available Soon'
-                    };
+        const hongKongRegions = locationsData.hongKongRegions;
+        const weather = weatherData.weather || {};
+        const trafficIncidents = trafficData.traffic || [];
         
-                    // Construct the weather icon URL
-                    const iconUrl = `https://www.hko.gov.hk/images/HKOWxIconOutline/pic${weatherData.weatherIconId}.png`;
+        // Traffic status indicator
+        const trafficStatus = trafficIncidents.length > 0 
+            ? `🔴 ${trafficIncidents.length} incident(s)` 
+            : '🟢 No major closures';
         
+        const weatherText = `
+            <b>General Situation:</b> ${weather.generalSituation || 'Available Soon'}<br>
+            <b>Typhoon Info:</b> ${weather.tcInfo || 'No typhoon warnings'}<br>
+            <b>Outlook:</b> ${weather.outlook || 'Available Soon'}<br>
+            <b>Traffic:</b> ${trafficStatus}
+        `;
 
-            // Combine the weather data into a single message
-            const weatherText = `
-                <b>Max Temperature:</b> ${weatherData.maxTemp}°C<br>
-                <b>Min Temperature:</b> ${weatherData.minTemp}°C<br>
-                <b>General Situation:</b> ${weatherData.generalSituation}<br>
-                <b>Typhoon Info:</b> ${weatherData.tcInfo}<br>
-                <b>Forecast Period:</b> ${weatherData.forecastPeriod}<br>
-                <b>Forecast Description:</b> ${weatherData.forecastDesc}<br>
-                <b>Outlook:</b> ${weatherData.outlook}<br>
-                <b>Local Waters Forecast:</b> ${flwWeatherData.localWatersForecast}<br>
-                <img src="${iconUrl}" alt="Weather Icon" style="width: 50px; height: 50px;" />
-            `;
+        hongKongRegions.forEach(region => {
+            const regionMarker = L.marker([region.lat, region.lng]).addTo(map);
+            regionMarker.bindPopup(`<b>Weather For ${region.name}</b><br>${weatherText}`);
+            markers.push(regionMarker);
+        });
 
-            // Loop through each region and add a marker with a popup
-            hongKongRegions.forEach(region => {
-                const regionMarker = L.marker([region.lat, region.lng]).addTo(map);
-                regionMarker.bindPopup(`<b>Weather For ${region.name}</b><br>${weatherText}`);
-                markers.push(regionMarker);
-            });
-
-            console.log('Fetched Hong Kong weather data:', regionalData, flwData); // Debugging log
-        })
-        .catch(error => console.error('Error fetching Hong Kong weather data:', error));
+        console.log('Fetched Hong Kong data from backend API');
+    } catch (error) {
+        console.error('Error fetching Hong Kong data:', error);
+    }
 }
 
-            // Define coordinates for additional regions in Hong Kong
-                const hongKongRegions = [
-            { name: 'Central and Western', lat: 22.282, lng: 114.158 },
-            { name: 'Eastern District', lat: 22.2849, lng: 114.221 },
-            { name: 'Kowloon City', lat: 22.3163, lng: 114.186 },
-            { name: "New Territories", lat: 22.4477, lng: 114.1872 },
-            { name: 'Kwun Tong', lat: 22.308, lng: 114.225 },
-            { name: 'Sham Shui Po', lat: 22.327, lng: 114.163 },
-            { name: 'Southern District', lat: 22.247, lng: 114.161 },
-            { name: 'Wan Chai', lat: 22.276, lng: 114.176 },
-            { name: 'Yau Tsim Mong', lat: 22.319, lng: 114.169 },
-            { name: 'Tsuen Wan', lat: 22.372, lng: 114.114 },
-            { name: 'Tuen Mun', lat: 22.391, lng: 113.973 },
-            { name: 'Sha Tin', lat: 22.382, lng: 114.191 },
-            { name: 'Tai Po', lat: 22.450, lng: 114.170 },
-            { name: 'Yuen Long', lat: 22.445, lng: 114.022 },
-            { name: 'Sai Kung', lat: 22.383, lng: 114.273 }
-            ];
-        // Switch location and load appropriate weather data
+// Switch location and load appropriate weather data
         function switchLocation(location) {
             const locationData = {
                 'singapore': { coords: [1.3521, 103.8198], fetchFunc: fetchSingaporeWeather },

@@ -5,6 +5,7 @@ const { WebClient } = require('@slack/web-api');
 const path = require('path');
 const bodyParser = require('body-parser'); 
 const rateLimit = require('express-rate-limit');
+const LTA_KEY = process.env.LTA_ACCOUNT_KEY;
 require('dotenv').config();
 
 const app = express();
@@ -36,7 +37,7 @@ app.use(bodyParser.json({ limit: '50mb' })); // Increase limit if necessary
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Define locations
+// Define locations with detailed coordinates
 const locations = {
     'klang-valley': {
         name: 'Klang Valley',
@@ -57,6 +58,62 @@ const locations = {
         zoomLevel: 12
     }
 };
+
+// Singapore areas for weather display
+const singaporeAreas = [
+    { area: "City", coordinates: [1.2830, 103.8514] },
+    { area: "Changi", coordinates: [1.3644, 103.9915] },
+    { area: "Toa Payoh", coordinates: [1.3346, 103.8560] },
+    { area: "Ang Mo Kio", coordinates: [1.3691, 103.8454] },
+    { area: "Jurong West", coordinates: [1.3404, 103.7064] },
+    { area: "Jurong East", coordinates: [1.3324, 103.7438] },
+    { area: "Kallang", coordinates: [1.3088, 103.8610] },
+    { area: "Pasir Ris", coordinates: [1.3731, 103.9495] },
+    { area: "Tuas", coordinates: [1.3214, 103.6490] },
+    { area: "Woodlands", coordinates: [1.4360, 103.7863] },
+    { area: "Bukit Merah", coordinates: [1.2830, 103.8000] },
+    { area: "Bukit Panjang", coordinates: [1.3932, 103.7795] },
+    { area: "Bukit Timah", coordinates: [1.3323, 103.7852] },
+    { area: "Serangoon", coordinates: [1.3532, 103.8700] },
+    { area: "Sengkang", coordinates: [1.3913, 103.8951] },
+    { area: "Yishun", coordinates: [1.4304, 103.8354] },
+    { area: "Marine Parade", coordinates: [1.3009, 103.8992] },
+    { area: "Bedok", coordinates: [1.3236, 103.9304] },
+    { area: "Clementi", coordinates: [1.3151, 103.7643] }
+];
+
+// Hong Kong regions
+const hongKongRegions = [
+    { name: 'Central and Western', lat: 22.282, lng: 114.158 },
+    { name: 'Eastern District', lat: 22.2849, lng: 114.221 },
+    { name: 'Kowloon City', lat: 22.3163, lng: 114.186 },
+    { name: 'New Territories', lat: 22.4477, lng: 114.1872 },
+    { name: 'Kwun Tong', lat: 22.308, lng: 114.225 },
+    { name: 'Sham Shui Po', lat: 22.327, lng: 114.163 },
+    { name: 'Southern District', lat: 22.247, lng: 114.161 },
+    { name: 'Wan Chai', lat: 22.276, lng: 114.176 },
+    { name: 'Yau Tsim Mong', lat: 22.319, lng: 114.169 },
+    { name: 'Tsuen Wan', lat: 22.372, lng: 114.114 },
+    { name: 'Tuen Mun', lat: 22.391, lng: 113.973 },
+    { name: 'Sha Tin', lat: 22.382, lng: 114.191 },
+    { name: 'Tai Po', lat: 22.450, lng: 114.170 },
+    { name: 'Yuen Long', lat: 22.445, lng: 114.022 },
+    { name: 'Sai Kung', lat: 22.383, lng: 114.273 }
+];
+
+// Malaysia cities
+const klangValleyCities = [
+    { city: "Kuala Lumpur", coordinates: [3.1390, 101.6869] },
+    { city: "Petaling Jaya", coordinates: [3.1073, 101.6067] },
+    { city: "Subang Jaya", coordinates: [3.0818, 101.5745] },
+    { city: "Shah Alam", coordinates: [3.0738, 101.5183] },
+    { city: "Puchong", coordinates: [3.0331, 101.6220] },
+    { city: "Cheras", coordinates: [3.0851, 101.7441] },
+    { city: "Ampang", coordinates: [3.1579, 101.7530] },
+    { city: "Gombak", coordinates: [3.2910, 101.6744] },
+    { city: "Bangi", coordinates: [2.9178, 101.7739] },
+    { city: "Kajang", coordinates: [2.9936, 101.7875] }
+];
 
 // API keys and Slack channel info
 const slackToken = process.env.SLACK_BOT_TOKEN;
@@ -121,12 +178,50 @@ async function fetchWeatherData(locationKey) {
     
 }
 
+// Fetch Traffic Data for SG (LTA DataMall)
+async function fetchSGTraffic() {
+    try {
+        const response = await axios.get('http://datamall2.mytransport.sg/ltaodataservice/TrafficIncidents', {
+            headers: { 'AccountKey': LTA_KEY }
+        });
+        return response.data.value || [];
+    } catch (error) {
+        console.error('Error fetching SG traffic:', error.message);
+        return [];
+    }
+}
+
+// Fetch Traffic Data for HK (Transport Department)
+async function fetchHKTraffic() {
+    try {
+        // Special Traffic News API (JSON)
+        const response = await axios.get('https://td.rtis.data.gov.hk/api/traffic/stn/v1/getSTN');
+        return response.data.STN || [];
+    } catch (error) {
+        console.error('Error fetching HK traffic:', error.message);
+        return [];
+    }
+}
+
 
 // Send formatted data to Slack
 async function prepareSlackMessage() {
-    const malaysiaData = await formatLocationData(await fetchWeatherData('klang-valley'), 'klang-valley');
-    const singaporeData = await formatLocationData(await fetchWeatherData('singapore'), 'singapore');
-    const hongKongData = await formatLocationData(await fetchWeatherData('hong-kong'), 'hong-kong');
+
+    // Fetch all data concurrently for efficiency
+    const [
+        weatherMY, weatherSG, weatherHK,
+        trafficSG, trafficHK
+    ] = await Promise.all([
+        fetchWeatherData('klang-valley'),
+        fetchWeatherData('singapore'),
+        fetchWeatherData('hong-kong'),
+        fetchSGTraffic(),
+        fetchHKTraffic()
+    ]);
+    
+    const malaysiaData = formatLocationData(weatherMY, 'klang-valley');
+    const singaporeData = formatLocationData(weatherSG, 'singapore', trafficSG);
+    const hongKongData = formatLocationData(weatherHK, 'hong-kong', trafficHK);
     const mapUrlSG = `${BASE_URL}`;
 
     return {
@@ -143,7 +238,7 @@ async function prepareSlackMessage() {
                 type: "section",
                 text: {
                     type: "mrkdwn",
-                    text: `:flag-sg: *Singapore 2-Hour Weather Forecast*\n${singaporeData.text}`
+                    text: `:flag-sg: *Singapore 2-H our Weather Forecast*\n${singaporeData.text}`
                 }
             },
             { type: "divider" },
@@ -169,6 +264,33 @@ async function prepareSlackMessage() {
                     type: "mrkdwn",
                     text: `<${mapUrlSG}|View Map For More>` 
                 }
+            },
+            { 
+                type: "header", 
+                text: { type: "plain_text", text: "Traffic Update", emoji: true } 
+            },
+            { type: "divider" },
+            // Singapore Section
+            {
+                type: "section",
+                text: { type: "mrkdwn", text: `:flag-sg: *Singapore Update*\n${singaporeData.text}\n${singaporeData.traffic}` }
+            },
+            { type: "divider" },
+            // Malaysia Section
+            {
+                type: "section",
+                text: { type: "mrkdwn", text: `:flag-my: *Malaysia Weather Warning*\n${malaysiaData.text}` }
+            },
+            { type: "divider" },
+            // Hong Kong Section
+            {
+                type: "section",
+                text: { type: "mrkdwn", text: `:flag-hk: *Hong Kong Update*\n${hongKongData.text}\n${hongKongData.traffic}` }
+            },
+            { type: "divider" },
+            {
+                type: "section",
+                text: { type: "mrkdwn", text: `<${mapUrl}|View Detailed Map>` }
             }
         ]
     };
@@ -176,52 +298,48 @@ async function prepareSlackMessage() {
 
     
 
-function formatLocationData(weatherData, locationKey) {
-let weatherText = '';
+function formatLocationData(weatherData, locationKey, trafficData = []) {
+    let weatherText = '';
+    let trafficText = '';
 
-if (weatherData.error) {
-    weatherText = `:warning: Error fetching weather data: ${weatherData.error}`;
-    return {
-        text: weatherText // Return just the text for error handling
-    };
-}
+    if (weatherData.error) {
+        return { text: `:warning: Weather Error: ${weatherData.error}`, traffic: '' };
+    }
 
-switch (locationKey) {
-    case 'klang-valley':
-        const warningIssue = weatherData[2]?.warning_issue || {};
-        weatherText = `*Warning Issue:* ${warningIssue.title_en || 'Available Soon'}\n` +
-                      `*Issued:* ${warningIssue.issued || 'Available Soon'}\n` +
-                      `*Valid To:* ${weatherData[2].valid_to || 'Available Soon'}\n` +
-                      `*Description:* ${weatherData[2].text_en || 'Available Soon'}`;
-        break;
-   case 'singapore':
-    const selectedAreas = [
-        "Ang Mo Kio", "Toa Payoh", "Changi", "City",
-        "Jurong East", "Jurong West", "Tuas", "Kallang",
-        "Pasir Ris", "Woodlands",
-        "Bukit Merah", "Bukit Panjang", "Bukit Timah",
-        "Serangoon", "Sengkang", "Yishun",
-        "Marine Parade", "Bedok", "Clementi"
-    ];
-        
-        const sgForecasts = weatherData.items?.[0]?.forecasts
-        ?.filter(item => selectedAreas.includes(item.area))
-        .map(item => `Area: ${item.area} - Forecast: ${item.forecast}`)
-        .join('\n') || 'No forecasts available';
-    weatherText = sgForecasts;
-    break;
+    switch (locationKey) {
+        case 'klang-valley':
+            const warningIssue = weatherData[2]?.warning_issue || {};
+            weatherText = `*Weather:* ${warningIssue.title_en || 'Stable'}\n*Valid To:* ${weatherData[2]?.valid_to || 'N/A'}`;
+            break;
 
-    case 'hong-kong':
-        weatherText = `*General Situation:* ${weatherData.generalSituation || 'Available Soon'}\n` +
-                      `*Typhoon Info:* ${weatherData.tcInfo || 'No typhoon warnings'}\n` +
-                      `*Outlook:* ${weatherData.outlook || 'Available Soon'}`;
-        break;
+        case 'singapore':
+            const selectedAreas = ["Ang Mo Kio", "Changi", "City", "Jurong East", "Tuas"];
+            weatherText = weatherData.items?.[0]?.forecasts
+                ?.filter(item => selectedAreas.includes(item.area))
+                .map(item => `• ${item.area}: ${item.forecast}`)
+                .join('\n') || 'No weather alerts.';
+            
+            // Format SG Traffic with Google Maps-style indicators
+            trafficText = trafficData.length > 0 
+                ? `*🚦 Traffic:* 🔴 ${trafficData[0].Message}` 
+                : `*🚦 Traffic:* 🟢 Smooth flow.`;
+            break;
+
+        case 'hong-kong':
+            weatherText = `*Weather Outlook:* ${weatherData.outlook || 'Available Soon'}`;
+            
+            // Format HK Traffic with Google Maps-style indicators
+            trafficText = trafficData.length > 0 
+                ? `*🚦 Traffic:* 🔴 ${trafficData[0].content}` 
+                : `*🚦 Traffic:* 🟢 No major closures.`;
+            break;
     default:
         weatherText = `No weather data available for ${locations[locationKey].name}`;
 }
 
 return {
-    text: weatherText // Return the formatted weather text
+    text: weatherText, // Return the formatted weather text
+    traffic: trafficText // Return the formatted traffic text
 };
 }    
 // Send Slack notification function
@@ -260,9 +378,7 @@ app.get('/send-notification', async (req, res) => {
 
 // Serve map page with location handling
 app.get('/map', (req, res) => {
-    const lat = req.query.lat;
-    const lng = req.query.lng;
-    const zoom = req.query.zoom;
+    const { lat, lng, zoom } = req.query;
 
     if (!lat || !lng || !zoom) {
         return res.status(400).send('Invalid or missing parameters. Please provide lat, lng, and zoom.');
@@ -270,6 +386,81 @@ app.get('/map', (req, res) => {
 
     // Serve the HTML file for the map
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// API: Get locations data
+app.get('/api/locations', (req, res) => {
+    res.json({
+        locations,
+        singaporeAreas,
+        hongKongRegions,
+        klangValleyCities
+    });
+});
+
+// API: Get weather data for a location
+app.get('/api/weather/:locationKey', async (req, res) => {
+    const { locationKey } = req.params;
+    
+    if (!locations[locationKey]) {
+        return res.status(400).json({ error: 'Invalid location key' });
+    }
+    
+    try {
+        const weatherData = await fetchWeatherData(locationKey);
+        res.json({
+            location: locations[locationKey],
+            weather: weatherData
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch weather data' });
+    }
+});
+
+// API: Get traffic data
+app.get('/api/traffic/:region', async (req, res) => {
+    const { region } = req.params;
+    
+    try {
+        let trafficData = [];
+        if (region === 'singapore') {
+            trafficData = await fetchSGTraffic();
+        } else if (region === 'hong-kong') {
+            trafficData = await fetchHKTraffic();
+        }
+        res.json({ traffic: trafficData });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch traffic data' });
+    }
+});
+
+// API: Get combined weather and traffic status
+app.get('/api/status/:locationKey', async (req, res) => {
+    const { locationKey } = req.params;
+    
+    if (!locations[locationKey]) {
+        return res.status(400).json({ error: 'Invalid location key' });
+    }
+    
+    try {
+        const weatherData = await fetchWeatherData(locationKey);
+        let trafficData = [];
+        
+        if (locationKey === 'singapore') {
+            trafficData = await fetchSGTraffic();
+        } else if (locationKey === 'hong-kong') {
+            trafficData = await fetchHKTraffic();
+        }
+        
+        const formattedData = formatLocationData(weatherData, locationKey, trafficData);
+        
+        res.json({
+            location: locations[locationKey],
+            ...formattedData
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch status data' });
+    }
 });
 
 
