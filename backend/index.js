@@ -305,7 +305,7 @@ async function prepareSlackMessage() {
             { type: "divider" },
             {
                 type: "section",
-                text: { type: "mrkdwn", text: `<${mapUrl}|View Detailed Map>` }
+                text: { type: "mrkdwn", text: `<${mapUrlSG}|View Detailed Map>` }
             }
         ]
     };
