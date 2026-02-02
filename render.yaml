@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: slackbot-weather
+    runtime: node
+    region: singapore
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SLACK_BOT_TOKEN
+        sync: false
+      - key: SLACK_CHANNEL_ID
+        sync: false
+      - key: LTA_ACCOUNT_KEY
+        sync: false
+      - key: BASE_URL
+        sync: false
+    healthCheckPath: /
+    autoDeploy: true
