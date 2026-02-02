@@ -317,10 +317,46 @@ function formatLocationData(weatherData, locationKey, trafficData = []) {
                 .map(item => `• ${item.area}: ${item.forecast}`)
                 .join('\n') || 'No weather alerts.';
             
-            // Format SG Traffic with Google Maps-style indicators
-            trafficText = trafficData.length > 0 
-                ? `*🚦 Traffic:* 🔴 ${trafficData[0].Message}` 
-                : `*🚦 Traffic:* 🟢 Smooth flow.`;
+            // Format SG Traffic with Google Maps-style indicators - include expressway and accident info
+            if (trafficData.length > 0) {
+                // Filter for accidents and expressway incidents
+                const accidents = trafficData.filter(i => i.Type === 'Accident');
+                const expressway = trafficData.filter(i => 
+                    i.Message?.includes('Expressway') || 
+                    i.Message?.includes('PIE') || 
+                    i.Message?.includes('CTE') || 
+                    i.Message?.includes('ECP') || 
+                    i.Message?.includes('AYE') || 
+                    i.Message?.includes('SLE') ||
+                    i.Message?.includes('TPE') ||
+                    i.Message?.includes('KPE') ||
+                    i.Message?.includes('BKE') ||
+                    i.Message?.includes('MCE')
+                );
+                
+                let trafficLines = [`*🚦 Traffic:* 🔴 ${trafficData.length} incident(s)`];
+                
+                if (accidents.length > 0) {
+                    trafficLines.push(`🚨 *Accidents:* ${accidents.length}`);
+                    accidents.slice(0, 2).forEach(a => {
+                        trafficLines.push(`  • ${a.Message}`);
+                    });
+                }
+                
+                if (expressway.length > 0 && expressway.length !== accidents.length) {
+                    const nonAccidentExpressway = expressway.filter(e => e.Type !== 'Accident').slice(0, 2);
+                    if (nonAccidentExpressway.length > 0) {
+                        trafficLines.push(`🛣️ *Expressway:*`);
+                        nonAccidentExpressway.forEach(e => {
+                            trafficLines.push(`  • ${e.Message}`);
+                        });
+                    }
+                }
+                
+                trafficText = trafficLines.join('\n');
+            } else {
+                trafficText = `*🚦 Traffic:* 🟢 Smooth flow.`;
+            }
             break;
 
         case 'hong-kong':
