@@ -241,71 +241,50 @@ async function prepareSlackMessage() {
 
     return {
         blocks: [
-            { 
-                type: "section", 
-                text: { 
-                    type: "mrkdwn", 
-                    text: ":mostly_sunny: *Weather Update*" 
-                } 
-            },
-            { type: "divider" },
-            {
-                type: "section",
-                text: {
-                    type: "mrkdwn",
-                    text: `:flag-sg: *Singapore 2-H our Weather Forecast*\n${singaporeData.text}`
-                }
-            },
-            { type: "divider" },
-            {
-                type: "section",
-                text: {
-                    type: "mrkdwn",
-                    text: `:flag-my: *Malaysia Weather Warning*\n${malaysiaData.text}`
-                }
-            },
-            { type: "divider" },
-            {
-                type: "section",
-                text: {
-                    type: "mrkdwn",
-                    text: `:flag-hk: *Hong Kong Weather Update*\n${hongKongData.text}`
-                }
-            },
-            { type: "divider" },
-            {
-                type: "section",
-                text: {
-                    type: "mrkdwn",
-                    text: `<${mapUrlSG}|View Map For More>` 
-                }
-            },
+            // Weather Update Header
             { 
                 type: "header", 
-                text: { type: "plain_text", text: "Traffic Update", emoji: true } 
+                text: { type: "plain_text", text: "🌤️ Weather & Traffic Update", emoji: true } 
             },
             { type: "divider" },
-            // Singapore Section
+            
+            // Singapore Section - Weather + Traffic
             {
                 type: "section",
-                text: { type: "mrkdwn", text: `:flag-sg: *Singapore Update*\n${singaporeData.text}\n${singaporeData.traffic}` }
+                text: {
+                    type: "mrkdwn",
+                    text: `:flag-sg: *Singapore*\n${singaporeData.text}\n${singaporeData.traffic}`
+                }
             },
             { type: "divider" },
-            // Malaysia Section
+            
+            // Malaysia Section - Weather only
             {
                 type: "section",
-                text: { type: "mrkdwn", text: `:flag-my: *Malaysia Weather Warning*\n${malaysiaData.text}` }
+                text: {
+                    type: "mrkdwn",
+                    text: `:flag-my: *Malaysia (Klang Valley)*\n${malaysiaData.text}`
+                }
             },
             { type: "divider" },
-            // Hong Kong Section
+            
+            // Hong Kong Section - Weather + Traffic
             {
                 type: "section",
-                text: { type: "mrkdwn", text: `:flag-hk: *Hong Kong Update*\n${hongKongData.text}\n${hongKongData.traffic}` }
+                text: {
+                    type: "mrkdwn",
+                    text: `:flag-hk: *Hong Kong*\n${hongKongData.text}\n${hongKongData.traffic}`
+                }
             },
             { type: "divider" },
+            
+            // Map Link
             {
                 type: "section",
-                text: { type: "mrkdwn", text: `<${mapUrlSG}|View Detailed Map>` }
+                text: { 
+                    type: "mrkdwn", 
+                    text: `🗺️ <${mapUrlSG}|View Interactive Map>` 
+                }
             }
         ]
     };
