@@ -237,7 +237,7 @@ async function prepareSlackMessage() {
     const malaysiaData = formatLocationData(weatherMY, 'klang-valley');
     const singaporeData = formatLocationData(weatherSG, 'singapore', trafficSG);
     const hongKongData = formatLocationData(weatherHK, 'hong-kong', trafficHK);
-    const mapUrlSG = `${BASE_URL}`;
+    const mapUrlSG = 'https://slackbot-project.onrender.com';
 
     return {
         blocks: [
