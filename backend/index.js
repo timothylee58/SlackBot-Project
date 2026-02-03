@@ -497,5 +497,8 @@ app.get('/api/status/:locationKey', async (req, res) => {
     }
 });
 
+// Export for cron job
+module.exports = { sendSlackNotification };
+
 
 
