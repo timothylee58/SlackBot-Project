@@ -1,7 +1,7 @@
 const cron = require('node-cron');
 const axios = require('axios');
 
-const BASE_URL = 'https://slackbot-project.onrender.com';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 // Helper function to trigger notification
 async function triggerNotification(scheduleType) {

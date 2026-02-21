@@ -9,9 +9,9 @@ const LTA_KEY = process.env.LTA_ACCOUNT_KEY;
 require('dotenv').config();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-app.set('trust proxy', 1); // 1 indicates trusting a single proxy, like Render
+app.set('trust proxy', 1); // Trust a single proxy (Railway, Render, etc.)
 
 const server = app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
@@ -237,7 +237,7 @@ async function prepareSlackMessage() {
     const malaysiaData = formatLocationData(weatherMY, 'klang-valley');
     const singaporeData = formatLocationData(weatherSG, 'singapore', trafficSG);
     const hongKongData = formatLocationData(weatherHK, 'hong-kong', trafficHK);
-    const mapUrlSG = 'https://slackbot-project.onrender.com';
+    const mapUrlSG = process.env.BASE_URL || 'http://localhost:3000';
 
     return {
         blocks: [
