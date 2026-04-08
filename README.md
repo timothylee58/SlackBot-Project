@@ -60,10 +60,28 @@ A weather notification Slackbot designed for delivery and logistics operations. 
 ```
 SlackBot-Project/
 ├── backend/
-│   ├── index.js              # Main Express server
+│   ├── index.js              # Entry point — starts server + cron
+│   ├── app.js                # Express setup, middleware, routes
 │   ├── cron-schedule.js      # Cron job definitions
 │   ├── index.html            # Homepage
 │   ├── package.json
+│   ├── .env.example          # Environment variable template
+│   ├── config/
+│   │   └── locations.js      # Static location/area data
+│   ├── middleware/
+│   │   ├── rateLimiter.js    # Express rate limiter
+│   │   └── errorHandler.js   # Global error handler
+│   ├── services/
+│   │   ├── weatherService.js # Weather API fetch + cache
+│   │   ├── trafficService.js # SG & HK traffic fetch
+│   │   └── slackService.js   # Slack message build + send
+│   ├── controllers/
+│   │   ├── weatherController.js
+│   │   ├── trafficController.js
+│   │   └── slackController.js
+│   ├── routes/
+│   │   ├── api.js            # /api/* routes
+│   │   └── pages.js          # /, /map, /send-notification
 │   ├── public/               # Static assets
 │   └── icon/                 # Icon assets
 ├── render.yaml               # Render deployment config
@@ -105,13 +123,17 @@ SlackBot-Project/
 
 ## ⚙️ Configuration
 
-Create a `.env` file inside the `backend/` directory:
+Copy `.env.example` to `.env` inside the `backend/` directory and fill in your values:
+
+```bash
+cp backend/.env.example backend/.env
+```
 
 ```env
 SLACK_BOT_TOKEN=xoxb-your-slack-bot-token
 SLACK_CHANNEL_ID=your-slack-channel-id
 LTA_ACCOUNT_KEY=your-lta-account-key
-BASE_URL=http://localhost:3000
+BASE_URL=https://your-app.onrender.com
 ```
 
 ### Setting up a Slack Bot
