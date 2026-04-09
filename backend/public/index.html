@@ -85,10 +85,18 @@
     <script>
         var map, markers = [];
         // Add cloud layer
-        var cloudLayer = L.tileLayer('https://{s}.tile.openweathermap.org/map/clouds/{z}/{x}/{y}.png?appid=f406bdab6bcbc64616a1f0531471b2e9', {
-         maxZoom: 19,
-         attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
-            });
+        var cloudLayer;
+        // Cloud and precipitation tile URLs are fetched from the server to keep the API key private
+        fetch('/api/owm/tile-url?layer=clouds')
+            .then(r => r.json())
+            .then(data => {
+                cloudLayer = L.tileLayer(data.tileUrl, {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
+                });
+                if (map) cloudLayer.addTo(map);
+            })
+            .catch(err => console.error('Failed to load cloud tile URL:', err));
         // Set default values for latitude, longitude, and zoom
         const defaultLat = 1.3521;  // Example: Default to Singapore latitude
         const defaultLng = 103.8198;  // Example: Default to Singapore longitude
@@ -405,10 +413,9 @@ function fetchMalaysiaWeather() {
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
 }
-          // Function to fetch weather data by coordinates
+          // Function to fetch weather data by coordinates (via server-side proxy)
      function fetchWeatherDataByCoords(lat, lng) {
-        const apiKey = 'f406bdab6bcbc64616a1f0531471b2e9'; 
-        const weatherApiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${apiKey}`;
+        const weatherApiUrl = `/api/owm/weather?lat=${lat}&lng=${lng}`;
     
         return fetch(weatherApiUrl)
             .then(response => {
@@ -442,8 +449,8 @@ function initMap() {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
     
-    // Optionally add cloudLayer initially
-    cloudLayer.addTo(map);
+    // Optionally add cloudLayer initially (if already loaded)
+    if (cloudLayer) cloudLayer.addTo(map);
 
     // Default to fetch weather for Singapore
     switchLocation('singapore');
@@ -452,6 +459,7 @@ function initMap() {
 
 // Toggle Cloud Layer
 function toggleCloudLayer() {
+    if (!cloudLayer) return;
     if (map.hasLayer(cloudLayer)) {
         map.removeLayer(cloudLayer);
     } else {
@@ -459,14 +467,21 @@ function toggleCloudLayer() {
     }
 }
 
-// Add Precipitation layer
-var precipitationLayer = L.tileLayer('https://{s}.tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=f406bdab6bcbc64616a1f0531471b2e9', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
-});
+// Add Precipitation layer (tile URL fetched from server)
+var precipitationLayer;
+fetch('/api/owm/tile-url?layer=precipitation_new')
+    .then(r => r.json())
+    .then(data => {
+        precipitationLayer = L.tileLayer(data.tileUrl, {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
+        });
+    })
+    .catch(err => console.error('Failed to load precipitation tile URL:', err));
 
 // Toggle Precipitation Layer
 function togglePrecipitationLayer() {
+    if (!precipitationLayer) return;
     if (map.hasLayer(precipitationLayer)) {
         map.removeLayer(precipitationLayer);
     } else {
@@ -521,9 +536,9 @@ function addPrecipitationLayer(precipitationData) {
     });
 }
 
-// Function to fetch the precipitation data from OpenWeatherMap
+// Function to fetch the precipitation data from OpenWeatherMap (via server-side proxy)
 function fetchPrecipitationData() {
-    const openWeatherAPI = 'https://api.openweathermap.org/data/2.5/onecall?lat=3.1390&lon=101.6869&exclude=minutely,hourly,daily&appid=f406bdab6bcbc64616a1f0531471b2e9';
+    const openWeatherAPI = '/api/owm/onecall?lat=3.1390&lng=101.6869';
 
     fetch(openWeatherAPI)
     .then(response => {
@@ -539,11 +554,7 @@ function fetchPrecipitationData() {
         .catch(error => console.error('Error fetching weather data:', error));
 }
 
-// Toggle precipitation layer
-var precipitationLayer = L.tileLayer('https://{s}.tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=f406bdab6bcbc64616a1f0531471b2e9', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
-});
+// Note: precipitationLayer is already initialized above via the tile-url proxy
 
     </script>
 </body>

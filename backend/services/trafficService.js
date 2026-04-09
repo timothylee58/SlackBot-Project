@@ -3,7 +3,7 @@ const axios = require('axios');
 // Fetch live traffic incidents from Singapore LTA DataMall
 async function fetchSGTraffic() {
     try {
-        const response = await axios.get('http://datamall2.mytransport.sg/ltaodataservice/TrafficIncidents', {
+        const response = await axios.get('https://datamall2.mytransport.sg/ltaodataservice/TrafficIncidents', {
             headers: { 'AccountKey': process.env.LTA_ACCOUNT_KEY }
         });
         return response.data.value || [];

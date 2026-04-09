@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const bodyParser = require('body-parser');
+const helmet = require('helmet');
 
 const limiter = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
@@ -13,10 +13,10 @@ const app = express();
 app.set('trust proxy', 1);
 
 // ── Middleware ────────────────────────────────────────────────────────────────
+app.use(helmet());
 app.use(limiter);
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Routes ────────────────────────────────────────────────────────────────────
