@@ -4,12 +4,14 @@
 function errorHandler(err, req, res, next) {
     console.error(`[Error] ${req.method} ${req.path}:`, err.message);
 
-    const status = err.status || 500;
-    const message = process.env.NODE_ENV === 'production' && status === 500
-        ? 'Internal server error'
-        : err.message || 'Internal server error';
+    if (res.headersSent) {
+        return next(err);
+    }
 
-    res.status(status).json({ error: message });
+    const status = err.status || 500;
+    res.status(status).json({
+        error: status === 500 ? 'Internal server error' : err.message
+    });
 }
 
 module.exports = errorHandler;

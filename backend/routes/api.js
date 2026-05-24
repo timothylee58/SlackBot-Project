@@ -18,9 +18,9 @@ router.get('/traffic/:region', getTraffic);
 // Combined weather + traffic status for a location
 router.get('/status/:locationKey', getStatus);
 
-// OpenWeatherMap proxy endpoints (keeps API key server-side)
-router.get('/owm/weather', getOWMWeather);
-router.get('/owm/onecall', getOWMOneCall);
-router.get('/owm/tile-url', getOWMTileUrl);
+// Catch-all for undefined /api/* routes
+router.use((req, res) => {
+    res.status(404).json({ error: `API endpoint not found: ${req.method} /api${req.path}` });
+});
 
 module.exports = router;
