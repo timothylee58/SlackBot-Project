@@ -5,6 +5,7 @@ const { getWeather, getStatus } = require('../controllers/weatherController');
 const { getTraffic } = require('../controllers/trafficController');
 const { getLocations } = require('../controllers/slackController');
 const { getOWMWeather, getOWMOneCall, getOWMTileUrl, getGoogleMapsKey } = require('../controllers/weatherProxyController');
+const { getSettings, updateSettings } = require('../controllers/settingsController');
 
 // Location metadata (used by the frontend map)
 router.get('/locations', getLocations);
@@ -25,6 +26,10 @@ router.get('/owm/tile-url', getOWMTileUrl);
 
 // Google Maps API key (served server-side to avoid exposing it in HTML source)
 router.get('/gmaps/key', getGoogleMapsKey);
+
+// Slack credentials — user-configurable at runtime
+router.get('/settings', getSettings);
+router.post('/settings', updateSettings);
 
 // Catch-all for undefined /api/* routes
 router.use((req, res) => {
