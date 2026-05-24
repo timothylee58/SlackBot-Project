@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Update for MY, SG, HK</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+
+    <style>
+        #map {
+            height: 100vh; /* Adjust this value to change vertical size */
+            width: 100vw; /* Adjust this value to change horizontal size */
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 9px;
+            left: 10px;
+            z-index: 1000;
+        }
+
+        #weather {
+            white-space: pre-wrap;
+            overflow-y: auto;
+            max-height: 105vh;
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-left: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        #top-right-image {
+            position: absolute;
+            top: 5px;
+            right: 12px;
+            z-index: 1000;
+            width: 150px;
+            height: auto;
+        }
+
+        .leaflet-control-zoom {
+            top: 580px; /* Adjust this value to change vertical position */
+            left: 1405px; /* Adjust this value to change horizontal position */
+            z-index: 1000; 
+        }
+    </style>
+</head>
+
+<body>
+
+    <img id="top-right-image" src="/icon/oddle-logo.png" alt="Top Right Image">
+
+    <div id="map"></div>
+
+    <!-- Controls with Bootstrap styling -->
+    <div id="controls" class="btn-group-vertical">
+        <button class="btn btn-primary mb-2" onclick="switchLocation('singapore')">Singapore</button>
+        <button class="btn btn-primary mb-2" onclick="switchLocation('hong-kong')">Hong Kong</button>
+        <button class="btn btn-primary mb-2" onclick="switchLocation('klang-valley')">Malaysia</button>
+        <button class="btn btn-secondary mb-2" onclick="toggleCloudLayer()">Show Clouds Layer</button>
+        <button class="btn btn-secondary mb-2" onclick="togglePrecipitationLayer()">Show Precipitation Layer</button>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        var map, markers = [];
+        // Add cloud layer
+        var cloudLayer;
+        // Cloud and precipitation tile URLs are fetched from the server to keep the API key private
+        fetch('/api/owm/tile-url?layer=clouds')
+            .then(r => r.json())
+            .then(data => {
+                cloudLayer = L.tileLayer(data.tileUrl, {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
+                });
+                if (map) cloudLayer.addTo(map);
+            })
+            .catch(err => console.error('Failed to load cloud tile URL:', err));
+        // Set default values for latitude, longitude, and zoom
+        const defaultLat = 1.3521;  // Example: Default to Singapore latitude
+        const defaultLng = 103.8198;  // Example: Default to Singapore longitude
+        const defaultZoom = 10;  // Default zoom level
+
+        // Function to get query parameters and validate them
+        function getQueryParams() {
+         const params = new URLSearchParams(window.location.search);
+    
+        // Parse lat, lng, and zoom from URL parameters
+        const lat = parseFloat(params.get('lat'));
+        const lng = parseFloat(params.get('lng'));
+        const zoom = parseInt(params.get('zoom'));
+
+        // Validate the values: check if they are within valid ranges
+        const isLatValid = !isNaN(lat) && lat >= -90 && lat <= 90;
+        const isLngValid = !isNaN(lng) && lng >= -180 && lng <= 180;
+        const isZoomValid = !isNaN(zoom) && zoom > 0;
+
+         // Return valid values or default values
+        return {
+        lat: isLatValid ? lat : defaultLat,
+        lng: isLngValid ? lng : defaultLng,
+        zoom: isZoomValid ? zoom : defaultZoom
+    };
+}
+
+        // Get validated latitude, longitude, and zoom
+        const { lat, lng, zoom } = getQueryParams();
+    
+
+
+
+// Fetch Singapore weather data with icons
+async function fetchSingaporeWeather() {
+    try {
+        // Fetch location data and weather from backend API
+        const [locationsRes, weatherRes, trafficRes] = await Promise.all([
+            fetch('/api/locations'),
+            fetch('/api/weather/singapore'),
+            fetch('/api/traffic/singapore')
+        ]);
+        
+        const locationsData = await locationsRes.json();
+        const weatherData = await weatherRes.json();
+        const trafficData = await trafficRes.json();
+        
+        const singaporeAreas = locationsData.singaporeAreas;
+        const forecasts = weatherData.weather?.items?.[0]?.forecasts || [];
+        const trafficIncidents = trafficData.traffic || [];
+        
+        singaporeAreas.forEach(area => {
+            const forecast = forecasts.find(f => f.area && f.area.includes(area.area)) || {};
+
+            // Select an icon based on forecast description
+            let weatherIcon = '/icon/cloudy-sunny.ico';
+            if (forecast.forecast?.includes('Cloudy')) {
+                weatherIcon = '/icon/cloudy.ico';
+            } else if (forecast.forecast?.includes('Thundery Showers')) {
+                weatherIcon = '/icon/thunderstorm.ico';
+            } else if (forecast.forecast?.includes('Light Rain') || forecast.forecast?.includes('Showers')) {
+                weatherIcon = '/icon/light-rain.ico';
+            } else if (forecast.forecast?.includes('Sunny')) {
+                weatherIcon = '/icon/sunny.ico';
+            }
+
+            const marker = L.marker(area.coordinates).addTo(map);
+            markers.push(marker);
+
+            // Traffic status indicator
+            const trafficStatus = trafficIncidents.length > 0 
+                ? `🔴 ${trafficIncidents.length} incident(s)` 
+                : '🟢 Smooth flow';
+
+            marker.bindPopup(`
+                <b>Singapore (${area.area})</b><br>
+                <img src="${weatherIcon}" alt="Weather Icon" style="width:50px;"><br>
+                ${forecast.forecast || "Forecast Data Available Soon"}<br>
+                <b>Traffic:</b> ${trafficStatus}<br>
+                Last Updated: ${weatherData.weather?.items?.[0]?.update_timestamp || "Unknown"}
+            `);
+        });
+    } catch (error) {
+        console.error('Error fetching Singapore data:', error);
+        // Fallback: show error markers
+        const defaultAreas = [
+            { area: "City", coordinates: [1.2830, 103.8514] },
+            { area: "Changi", coordinates: [1.3644, 103.9915] }
+        ];
+        defaultAreas.forEach(area => {
+            const marker = L.marker(area.coordinates).addTo(map);
+            marker.bindPopup(`<b>Singapore (${area.area})</b><br>Unable to fetch data.`);
+            markers.push(marker);
+        });
+    }
+}
+
+
+// Fetch weather warnings for Malaysia
+async function fetchMalaysiaWeather() {
+    try {
+        const [locationsRes, weatherRes] = await Promise.all([
+            fetch('/api/locations'),
+            fetch('/api/weather/klang-valley')
+        ]);
+        
+        const locationsData = await locationsRes.json();
+        const weatherData = await weatherRes.json();
+        
+        const klangValleyCities = locationsData.klangValleyCities;
+        const warnings = weatherData.weather || [];
+        const selectedWarnings = Array.isArray(warnings) ? warnings.slice(2) : [];
+        
+        const affectedRegions = ["Hulu Selangor", "Gombak", "Petaling", "Hulu Langat", "FT Kuala Lumpur"];
+        const weatherIcon = "/icon/light-rain.ico";
+        
+        function checkForAffectedRegions(text) {
+            return affectedRegions.some(region => text.includes(region));
+        }
+        
+        if (selectedWarnings.length === 0) {
+            // No warnings - show stable weather
+            klangValleyCities.forEach(location => {
+                const marker = L.marker(location.coordinates).addTo(map);
+                marker.bindPopup(`
+                    <b>${location.city}</b><br>
+                    🟢 No weather warnings<br>
+                    <a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>
+                `);
+                markers.push(marker);
+            });
+        } else {
+            selectedWarnings.forEach(warning => {
+                const warningText = warning?.text_en || "No warnings currently.";
+                const validUntil = warning?.valid_to || "Unknown";
+                const isSelangorKLWarning = checkForAffectedRegions(warningText);
+                
+                klangValleyCities.forEach(location => {
+                    const marker = L.marker(location.coordinates).addTo(map);
+                    let popupContent = `<b>${location.city}</b><br>🔴 ${warningText}<br>Valid Until: ${validUntil}`;
+                    if (isSelangorKLWarning) {
+                        popupContent += `<br><img src="${weatherIcon}" alt="Weather icon" style="width: 50px; height: 50px;">`;
+                    }
+                    popupContent += `<br><a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>`;
+                    marker.bindPopup(popupContent);
+                    markers.push(marker);
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching Malaysia weather data:', error);
+    }
+}
+       
+        // Fetch Hong Kong weather data
+async function fetchHongKongWeather() {
+    try {
+        const [locationsRes, weatherRes, trafficRes] = await Promise.all([
+            fetch('/api/locations'),
+            fetch('/api/weather/hong-kong'),
+            fetch('/api/traffic/hong-kong')
+        ]);
+        
+        const locationsData = await locationsRes.json();
+        const weatherData = await weatherRes.json();
+        const trafficData = await trafficRes.json();
+        
+        const hongKongRegions = locationsData.hongKongRegions;
+        const weather = weatherData.weather || {};
+        const trafficIncidents = trafficData.traffic || [];
+        
+        // Traffic status indicator
+        const trafficStatus = trafficIncidents.length > 0 
+            ? `🔴 ${trafficIncidents.length} incident(s)` 
+            : '🟢 No major closures';
+        
+        const weatherText = `
+            <b>General Situation:</b> ${weather.generalSituation || 'Available Soon'}<br>
+            <b>Typhoon Info:</b> ${weather.tcInfo || 'No typhoon warnings'}<br>
+            <b>Outlook:</b> ${weather.outlook || 'Available Soon'}<br>
+            <b>Traffic:</b> ${trafficStatus}
+        `;
+
+        hongKongRegions.forEach(region => {
+            const regionMarker = L.marker([region.lat, region.lng]).addTo(map);
+            regionMarker.bindPopup(`<b>Weather For ${region.name}</b><br>${weatherText}`);
+            markers.push(regionMarker);
+        });
+
+        console.log('Fetched Hong Kong data from backend API');
+    } catch (error) {
+        console.error('Error fetching Hong Kong data:', error);
+    }
+}
+
+// Switch location and load appropriate weather data
+        function switchLocation(location) {
+            const locationData = {
+                'singapore': { coords: [1.3521, 103.8198], fetchFunc: fetchSingaporeWeather },
+                'hong-kong': { coords: [22.3193, 114.1694], fetchFunc: fetchHongKongWeather },
+                'klang-valley': { coords: [3.1390, 101.6869], fetchFunc: fetchMalaysiaWeather }
+            };
+        
+            if (locationData[location]) {
+                map.setView(locationData[location].coords, 10);
+                clearMarkers();
+                locationData[location].fetchFunc();
+            }
+        }
+
+         // Clear existing markers
+            function clearMarkers() {
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+}
+          // Function to fetch weather data by coordinates (via server-side proxy)
+     function fetchWeatherDataByCoords(lat, lng) {
+        const weatherApiUrl = `/api/owm/weather?lat=${lat}&lng=${lng}`;
+    
+        return fetch(weatherApiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch weather data');
+                }
+                return response.json();
+            })
+            .then(weatherData => {
+                const locationKey = 'singapore'; 
+                const popupContent = formatWeatherPopup(weatherData, lat, lng, locationKey); 
+                const marker = L.marker([lat, lng]).addTo(map);
+                marker.bindPopup(popupContent).openPopup();
+            })
+            .catch(error => {
+                console.error('Error fetching weather data by coordinates:', error);
+            });
+    }
+    
+
+// Initialize map function
+function initMap() {
+    const { lat, lng, zoom } = getQueryParams();
+    console.log('Initializing map with coordinates:', lat, lng, 'and zoom level:', zoom); // Debug
+
+    map = L.map('map').setView([lat, lng], zoom);
+
+    // Add base map tiles (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Optionally add cloudLayer initially (if already loaded)
+    if (cloudLayer) cloudLayer.addTo(map);
+
+    // Default to fetch weather for Singapore
+    switchLocation('singapore');
+    
+}
+
+// Toggle Cloud Layer
+function toggleCloudLayer() {
+    if (!cloudLayer) return;
+    if (map.hasLayer(cloudLayer)) {
+        map.removeLayer(cloudLayer);
+    } else {
+        cloudLayer.addTo(map);
+    }
+}
+
+// Add Precipitation layer (tile URL fetched from server)
+var precipitationLayer;
+fetch('/api/owm/tile-url?layer=precipitation_new')
+    .then(r => r.json())
+    .then(data => {
+        precipitationLayer = L.tileLayer(data.tileUrl, {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
+        });
+    })
+    .catch(err => console.error('Failed to load precipitation tile URL:', err));
+
+// Toggle Precipitation Layer
+function togglePrecipitationLayer() {
+    if (!precipitationLayer) return;
+    if (map.hasLayer(precipitationLayer)) {
+        map.removeLayer(precipitationLayer);
+    } else {
+        precipitationLayer.addTo(map);
+    }
+}
+
+// Call the initMap function when the page loads
+window.onload = initMap;
+
+           // Toggle cloud layer
+           let cloudLayerActive = false; // Initialize the variable
+
+           function toggleCloudLayer() {
+               if (!cloudLayerActive) {
+                   // Code to activate the cloud layer
+                   console.log("Cloud layer activated");
+                   cloudLayerActive = true;
+               } else {
+                   // Code to deactivate the cloud layer
+                   console.log("Cloud layer deactivated");
+                   cloudLayerActive = false;
+               }
+           }
+        // Function to classify rain intensity
+    function getRainIntensity(rainValue) {
+    if (rainValue > 10) {
+        return { intensity: 'heavy', color: '#8B0000', opacity: 1.0 }; // Red for heavy rain
+    } else if (rainValue >= 2 && rainValue <= 10) {
+        return { intensity: 'moderate', color: '#FFA500', opacity: 0.7 }; // Orange for moderate rain
+    } else if (rainValue < 2) {
+        return { intensity: 'light', color: '#00BFFF', opacity: 0.4 }; // Blue for light rain
+    } else {
+        return { intensity: 'none', color: '#FFFFFF', opacity: 0 }; // No rain, transparent
+    }
+}
+
+// Function to add precipitation layer with dynamic opacity and color
+function addPrecipitationLayer(precipitationData) {
+    precipitationData.forEach(location => {
+        var rainValue = location.rain ? location.rain['1h'] : 0; // Rainfall in mm/hr (last hour)
+        var intensity = getRainIntensity(rainValue);
+
+        // Create a circle marker with dynamic color and opacity
+        var circleMarker = L.circleMarker([location.lat, location.lon], {
+            color: intensity.color,
+            fillColor: intensity.color,
+            fillOpacity: intensity.opacity,
+            radius: 10
+        }).addTo(map);
+
+    });
+}
+
+// Function to fetch the precipitation data from OpenWeatherMap (via server-side proxy)
+function fetchPrecipitationData() {
+    const openWeatherAPI = '/api/owm/onecall?lat=3.1390&lng=101.6869';
+
+    fetch(openWeatherAPI)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+        return response.json();
+    })
+        .then(data => {
+            // Assume data.hourly is an array of weather data, each including lat, lon, and rain info
+            addPrecipitationLayer(data.hourly);
+        })
+        .catch(error => console.error('Error fetching weather data:', error));
+}
+
+// Note: precipitationLayer is already initialized above via the tile-url proxy
+
+    </script>
+</body>
+
+</html>
