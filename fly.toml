@@ -1,47 +1,42 @@
-# fly.toml — Fly.io deployment config for SlackBot
-# Deploy: fly launch --no-deploy, then set secrets, then fly deploy
+# fly.toml app configuration file generated for slackbot-project-iu6tsq on 2026-05-24T23:20:07Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "slackbot-project"
-primary_region = "sin"  # Singapore — closest to LTA DataMall
+app = 'slackbot-project-iu6tsq'
+primary_region = 'ams'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  PORT = "3000"
-  NODE_ENV = "production"
-
-# Set these with: fly secrets set KEY=value
-# Required secrets:
-#   SLACK_BOT_TOKEN
-#   SLACK_CHANNEL_ID
-#   LTA_ACCOUNT_KEY
-#   BASE_URL   (set to https://<app-name>.fly.dev after first deploy)
+  NODE_ENV = 'production'
+  PORT = '3000'
 
 [http_service]
-  internal_port = 3000
+  internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
 
   [http_service.concurrency]
-    type = "requests"
+    type = 'requests'
     hard_limit = 100
     soft_limit = 80
 
-[[vm]]
-  # Puppeteer needs at least 512 MB; use 1 GB for headroom
-  memory = "1gb"
-  cpu_kind = "shared"
-  cpus = 1
-
 [checks]
   [checks.health]
-    grace_period = "30s"
-    interval = "30s"
-    method = "GET"
-    path = "/"
     port = 3000
-    timeout = "10s"
-    type = "http"
+    type = 'http'
+    interval = '30s'
+    timeout = '10s'
+    grace_period = '30s'
+    method = 'GET'
+    path = '/'
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256
