@@ -1,0 +1,13 @@
+{
+  "name": "slackbot-project",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node backend/index.js",
+    "dev": "encore run",
+    "build": "encore build docker slackbot-project:latest"
+  },
+  "dependencies": {
+    "encore.dev": "^1.46.4"
+  }
+}
