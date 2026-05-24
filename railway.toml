@@ -1,0 +1,19 @@
+# railway.toml — Railway deployment config for SlackBot
+# Railway auto-detects Node.js; this file fine-tunes the build and run.
+
+[build]
+  builder = "DOCKERFILE"
+  dockerfilePath = "Dockerfile"
+
+[deploy]
+  startCommand = "node index.js"
+  healthcheckPath = "/"
+  healthcheckTimeout = 30
+  restartPolicyType = "ON_FAILURE"
+  restartPolicyMaxRetries = 3
+
+[[services]]
+  name = "slackbot"
+
+  [services.deploy]
+    region = "asia-southeast1"   # Singapore — closest to LTA DataMall
