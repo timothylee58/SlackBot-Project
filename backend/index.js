@@ -9,8 +9,8 @@ const server = app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-// 2-minute timeout for long-running Slack/API calls
-server.timeout = 120000;
+// Unlimited timeout for long-running Slack/API calls
+server.timeout = 0;
 
 // Start cron jobs after server is ready
 require('./cron-schedule');
