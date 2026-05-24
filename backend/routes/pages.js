@@ -3,6 +3,7 @@ const path = require('path');
 const router = express.Router();
 
 const { triggerNotification } = require('../controllers/slackController');
+const { requireNotificationAuth } = require('../middleware/notificationAuth');
 
 // Serve the homepage
 router.get('/', (req, res) => {
@@ -34,7 +35,7 @@ router.get('/map', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
-// Manual trigger endpoint for testing Slack notifications
-router.get('/send-notification', triggerNotification);
+// Manual trigger endpoint for testing Slack notifications (requires auth token)
+router.get('/send-notification', requireNotificationAuth, triggerNotification);
 
 module.exports = router;

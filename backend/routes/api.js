@@ -4,6 +4,7 @@ const router = express.Router();
 const { getWeather, getStatus } = require('../controllers/weatherController');
 const { getTraffic } = require('../controllers/trafficController');
 const { getLocations } = require('../controllers/slackController');
+const { getOWMWeather, getOWMOneCall, getOWMTileUrl } = require('../controllers/weatherProxyController');
 
 // Location metadata (used by the frontend map)
 router.get('/locations', getLocations);
