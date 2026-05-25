@@ -1,6 +1,6 @@
 const { WebClient } = require('@slack/web-api');
 const { fetchWeatherData } = require('./weatherService');
-const { fetchSGTraffic, fetchHKTraffic } = require('./trafficService');
+const { fetchSGTraffic, fetchHKTraffic, fetchMYTraffic } = require('./trafficService');
 const { locations } = require('../config/locations');
 const runtimeSettings = require('../config/runtimeSettings');
 
@@ -29,6 +29,14 @@ function formatLocationData(weatherData, locationKey, trafficData = []) {
         case 'klang-valley': {
             const warningIssue = weatherData[2]?.warning_issue || {};
             weatherText = `*Weather:* ${warningIssue.title_en || 'Stable'}\n*Valid To:* ${weatherData[2]?.valid_to || 'N/A'}`;
+
+            if (trafficData.length > 0) {
+                const lines = [`*🚦 Traffic:* 🔴 ${trafficData.length} disruption(s)`];
+                trafficData.slice(0, 3).forEach(t => lines.push(`  • ${t.description}`));
+                trafficText = lines.join('\n');
+            } else {
+                trafficText = `*🚦 Traffic:* 🟢 No reported disruptions.`;
+            }
             break;
         }
 
@@ -66,9 +74,16 @@ function formatLocationData(weatherData, locationKey, trafficData = []) {
 
         case 'hong-kong': {
             weatherText = `*Weather Outlook:* ${weatherData.outlook || 'Available Soon'}`;
-            trafficText = trafficData.length > 0
-                ? `*🚦 Traffic:* 🔴 ${trafficData[0].content}`
-                : `*🚦 Traffic:* 🟢 No major closures.`;
+            if (trafficData.length > 0) {
+                const lines = [`*🚦 Traffic:* 🔴 ${trafficData.length} notice(s)`];
+                trafficData.slice(0, 3).forEach(t => {
+                    const loc  = t.district ? `[${t.district}] ` : '';
+                    lines.push(`  • ${loc}${t.description}`);
+                });
+                trafficText = lines.join('\n');
+            } else {
+                trafficText = `*🚦 Traffic:* 🟢 No major closures.`;
+            }
             break;
         }
 
@@ -81,15 +96,16 @@ function formatLocationData(weatherData, locationKey, trafficData = []) {
 
 // Fetches all data concurrently and builds the Slack Block Kit message payload
 async function prepareSlackMessage() {
-    const [weatherMY, weatherSG, weatherHK, trafficSG, trafficHK] = await Promise.all([
+    const [weatherMY, weatherSG, weatherHK, trafficMY, trafficSG, trafficHK] = await Promise.all([
         fetchWeatherData('klang-valley'),
         fetchWeatherData('singapore'),
         fetchWeatherData('hong-kong'),
+        fetchMYTraffic(),
         fetchSGTraffic(),
         fetchHKTraffic()
     ]);
 
-    const malaysia = formatLocationData(weatherMY, 'klang-valley');
+    const malaysia = formatLocationData(weatherMY, 'klang-valley', trafficMY);
     const singapore = formatLocationData(weatherSG, 'singapore', trafficSG);
     const hongKong = formatLocationData(weatherHK, 'hong-kong', trafficHK);
 
@@ -107,7 +123,7 @@ async function prepareSlackMessage() {
             { type: "divider" },
             {
                 type: "section",
-                text: { type: "mrkdwn", text: `:flag-my: *Malaysia (Klang Valley)*\n${malaysia.text}` }
+                text: { type: "mrkdwn", text: `:flag-my: *Malaysia (Klang Valley)*\n${malaysia.text}\n${malaysia.traffic}` }
             },
             { type: "divider" },
             {
