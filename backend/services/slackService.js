@@ -2,9 +2,8 @@ const { WebClient } = require('@slack/web-api');
 const { fetchWeatherData } = require('./weatherService');
 const { fetchSGTraffic, fetchHKTraffic } = require('./trafficService');
 const { locations } = require('../config/locations');
+const runtimeSettings = require('../config/runtimeSettings');
 
-const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
-const channelId = process.env.SLACK_CHANNEL_ID;
 const MAP_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 // SG areas shown in the Slack message — subset of all areas
@@ -126,6 +125,15 @@ async function prepareSlackMessage() {
 
 // Posts the weather + traffic update to the configured Slack channel
 async function sendSlackNotification() {
+    const token     = runtimeSettings.get('SLACK_BOT_TOKEN');
+    const channelId = runtimeSettings.get('SLACK_CHANNEL_ID');
+
+    if (!token || !channelId) {
+        throw new Error('Slack credentials not configured. Set SLACK_BOT_TOKEN and SLACK_CHANNEL_ID via the Settings panel.');
+    }
+
+    const slackClient = new WebClient(token);
+
     try {
         const message = await prepareSlackMessage();
         console.log('Formatted Slack Message:', JSON.stringify(message, null, 2));

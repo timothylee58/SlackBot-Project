@@ -52,6 +52,40 @@
         <button class="btn btn-primary mb-2" onclick="switchLocation('klang-valley')">Malaysia</button>
         <button class="btn btn-secondary mb-2" onclick="toggleCloudLayer()">Show Clouds Layer</button>
         <button class="btn btn-secondary mb-2" onclick="togglePrecipitationLayer()">Show Precipitation Layer</button>
+        <button class="btn btn-dark mb-2" data-toggle="modal" data-target="#settingsModal">⚙️ Slack Settings</button>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="settingsModalLabel">Slack Configuration</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="settings-alert" class="alert d-none" role="alert"></div>
+                    <div class="form-group">
+                        <label for="slackToken">Slack Bot Token</label>
+                        <input type="password" class="form-control" id="slackToken"
+                               placeholder="xoxb-..." autocomplete="off">
+                        <small class="form-text text-muted">Starts with <code>xoxb-</code>. Leave blank to keep current value.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="slackChannel">Slack Channel ID</label>
+                        <input type="text" class="form-control" id="slackChannel"
+                               placeholder="C0123456789" autocomplete="off">
+                        <small class="form-text text-muted">The channel ID (not the name), e.g. <code>C0123456789</code>.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSettings()">Save</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap JS -->
@@ -338,6 +372,55 @@
 
             // Default view
             switchLocation('singapore');
+        }
+
+        // ── Settings modal ────────────────────────────────────────────────────────
+        function showSettingsAlert(msg, type) {
+            const el = document.getElementById('settings-alert');
+            el.className = `alert alert-${type}`;
+            el.textContent = msg;
+            el.classList.remove('d-none');
+        }
+
+        // Pre-fill channel ID (token is masked — never pre-filled)
+        document.getElementById('settingsModal').addEventListener('show.bs.modal', function () {
+            fetch('/api/settings')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('slackChannel').value = data.SLACK_CHANNEL_ID || '';
+                    document.getElementById('settings-alert').classList.add('d-none');
+                })
+                .catch(() => {});
+        });
+
+        function saveSettings() {
+            const token   = document.getElementById('slackToken').value.trim();
+            const channel = document.getElementById('slackChannel').value.trim();
+
+            if (!token && !channel) {
+                showSettingsAlert('Please enter at least one value.', 'warning');
+                return;
+            }
+
+            const body = {};
+            if (token)   body.SLACK_BOT_TOKEN  = token;
+            if (channel) body.SLACK_CHANNEL_ID = channel;
+
+            fetch('/api/settings', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(body),
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        showSettingsAlert(data.error, 'danger');
+                    } else {
+                        showSettingsAlert('Settings saved!', 'success');
+                        document.getElementById('slackToken').value = '';
+                    }
+                })
+                .catch(() => showSettingsAlert('Failed to save settings.', 'danger'));
         }
 
         // ── Bootstrap: fetch Maps API key then load the SDK ───────────────────────
