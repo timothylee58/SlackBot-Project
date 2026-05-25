@@ -22,6 +22,8 @@ var openInfoWindow = null;
 var cloudOverlay, precipOverlay;
 var cloudVisible   = false;
 var precipVisible  = false;
+var trafficLayer;
+var trafficVisible = false;
 
 // ── RainViewer overlays (no API key required) ─────────────────────────────────
 function loadRainViewerOverlays() {
@@ -243,17 +245,37 @@ function switchLocation(location) {
     data[location].fn();
 }
 
-// ── Cloud / Precipitation toggles ─────────────────────────────────────────────
+// ── Overlay helpers ───────────────────────────────────────────────────────────
+function removeOverlay(overlay) {
+    for (let i = 0; i < map.overlayMapTypes.getLength(); i++) {
+        if (map.overlayMapTypes.getAt(i) === overlay) {
+            map.overlayMapTypes.removeAt(i);
+            return;
+        }
+    }
+}
+
 function toggleCloudLayer() {
     if (!cloudOverlay) return;
-    if (cloudVisible) { map.overlayMapTypes.clear(); cloudVisible = false; }
+    if (cloudVisible) { removeOverlay(cloudOverlay); cloudVisible = false; }
     else              { map.overlayMapTypes.push(cloudOverlay); cloudVisible = true; }
 }
 
 function togglePrecipitationLayer() {
     if (!precipOverlay) return;
-    if (precipVisible) { map.overlayMapTypes.clear(); precipVisible = false; }
+    if (precipVisible) { removeOverlay(precipOverlay); precipVisible = false; }
     else               { map.overlayMapTypes.push(precipOverlay); precipVisible = true; }
+}
+
+function toggleTrafficLayer() {
+    if (!trafficLayer) trafficLayer = new google.maps.TrafficLayer();
+    if (trafficVisible) {
+        trafficLayer.setMap(null);
+        trafficVisible = false;
+    } else {
+        trafficLayer.setMap(map);
+        trafficVisible = true;
+    }
 }
 
 // ── Map initialisation (called by Google Maps SDK callback) ───────────────────
@@ -261,6 +283,7 @@ function initMap() {
     const { lat, lng, zoom } = getQueryParams();
     map = new google.maps.Map(document.getElementById('map'), {
         center: { lat, lng }, zoom, mapTypeId: 'roadmap',
+        fullscreenControl: false,
     });
     loadRainViewerOverlays();
     switchLocation('singapore');
@@ -311,6 +334,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('btn-klang-valley').addEventListener('click', () => switchLocation('klang-valley'));
     document.getElementById('btn-cloud').addEventListener('click', toggleCloudLayer);
     document.getElementById('btn-precip').addEventListener('click', togglePrecipitationLayer);
+    document.getElementById('btn-traffic').addEventListener('click', toggleTrafficLayer);
     document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
 
     document.getElementById('settingsModal').addEventListener('show.bs.modal', function () {
