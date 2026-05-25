@@ -119,22 +119,40 @@
         var cloudVisible  = false;
         var precipVisible = false;
 
-        // ── OWM tile overlay factory ──────────────────────────────────────────────
-        function makeOWMOverlay(tileUrl) {
-            return new google.maps.ImageMapType({
-                getTileUrl: function (coord, zoom) {
-                    // OWM tile URLs use {z}/{x}/{y}
-                    return tileUrl
-                        .replace('{z}', zoom)
-                        .replace('{x}', coord.x)
-                        .replace('{y}', coord.y)
-                        // OWM supports multiple sub-domains (a/b/c) — pick one
-                        .replace('{s}', 'tile');
-                },
-                tileSize: new google.maps.Size(256, 256),
-                opacity:  0.6,
-                name:     'OWM overlay',
-            });
+        // ── RainViewer overlay factory (no API key required) ─────────────────────
+        // Fetches the latest radar/satellite timestamps from RainViewer and builds
+        // Google Maps ImageMapType overlays for precipitation radar and cloud cover.
+        function loadRainViewerOverlays() {
+            fetch('https://api.rainviewer.com/public/weather-maps.json')
+                .then(r => r.json())
+                .then(data => {
+                    // Latest radar frame
+                    const radarFrames = data.radar && data.radar.past;
+                    if (radarFrames && radarFrames.length) {
+                        const latest = radarFrames[radarFrames.length - 1].path;
+                        precipOverlay = new google.maps.ImageMapType({
+                            getTileUrl: (coord, zoom) =>
+                                `https://tilecache.rainviewer.com${latest}/512/${zoom}/${coord.x}/${coord.y}/2/1_1.png`,
+                            tileSize: new google.maps.Size(512, 512),
+                            opacity:  0.6,
+                            name:     'Precipitation Radar',
+                        });
+                    }
+
+                    // Latest satellite infrared (cloud cover) frame
+                    const satFrames = data.satellite && data.satellite.infrared;
+                    if (satFrames && satFrames.length) {
+                        const latest = satFrames[satFrames.length - 1].path;
+                        cloudOverlay = new google.maps.ImageMapType({
+                            getTileUrl: (coord, zoom) =>
+                                `https://tilecache.rainviewer.com${latest}/512/${zoom}/${coord.x}/${coord.y}/0/0_0.png`,
+                            tileSize: new google.maps.Size(512, 512),
+                            opacity:  0.5,
+                            name:     'Cloud Cover',
+                        });
+                    }
+                })
+                .catch(err => console.error('RainViewer overlay load failed:', err));
         }
 
         // ── Marker helpers ────────────────────────────────────────────────────────
@@ -359,16 +377,8 @@
                 mapTypeId: 'roadmap',
             });
 
-            // Fetch OWM tile URLs (key stays server-side)
-            fetch('/api/owm/tile-url?layer=clouds')
-                .then(r => r.json())
-                .then(d => { cloudOverlay = makeOWMOverlay(d.tileUrl); })
-                .catch(err => console.error('Cloud tile URL failed:', err));
-
-            fetch('/api/owm/tile-url?layer=precipitation_new')
-                .then(r => r.json())
-                .then(d => { precipOverlay = makeOWMOverlay(d.tileUrl); })
-                .catch(err => console.error('Precipitation tile URL failed:', err));
+            // Load RainViewer weather overlays (no API key needed)
+            loadRainViewerOverlays();
 
             // Default view
             switchLocation('singapore');
