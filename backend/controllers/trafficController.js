@@ -1,6 +1,6 @@
-const { fetchSGTraffic, fetchHKTraffic } = require('../services/trafficService');
+const { fetchSGTraffic, fetchHKTraffic, fetchMYTraffic } = require('../services/trafficService');
 
-const SUPPORTED_TRAFFIC_REGIONS = ['singapore', 'hong-kong'];
+const SUPPORTED_TRAFFIC_REGIONS = ['singapore', 'hong-kong', 'klang-valley'];
 
 // GET /api/traffic/:region
 async function getTraffic(req, res, next) {
@@ -16,8 +16,9 @@ async function getTraffic(req, res, next) {
 
     try {
         let trafficData = [];
-        if (region === 'singapore') trafficData = await fetchSGTraffic();
-        if (region === 'hong-kong') trafficData = await fetchHKTraffic();
+        if (region === 'singapore')   trafficData = await fetchSGTraffic();
+        if (region === 'hong-kong')   trafficData = await fetchHKTraffic();
+        if (region === 'klang-valley') trafficData = await fetchMYTraffic();
 
         if (!Array.isArray(trafficData)) {
             return res.status(502).json({ error: 'Failed to fetch traffic data from upstream API.' });
