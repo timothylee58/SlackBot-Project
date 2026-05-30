@@ -289,6 +289,26 @@ function initMap() {
     switchLocation('singapore');
 }
 
+window.initMap = initMap;
+
+function showMapLoadError(message) {
+    const mapEl = document.getElementById('map');
+    if (!mapEl) return;
+
+    mapEl.innerHTML = '';
+    const errorEl = document.createElement('p');
+    errorEl.style.padding = '2rem';
+    errorEl.style.color = 'red';
+    errorEl.textContent = message;
+    mapEl.appendChild(errorEl);
+}
+
+window.gm_authFailure = function () {
+    showMapLoadError(
+        'Map unavailable: the configured Google Maps API key is invalid, unauthorized, or missing Maps JavaScript API access.'
+    );
+};
+
 // ── Settings modal ────────────────────────────────────────────────────────────
 function showSettingsAlert(msg, type) {
     const el = document.getElementById('settings-alert');
@@ -352,14 +372,14 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
             if (!data.key) throw new Error('No Google Maps API key returned');
             const script = document.createElement('script');
-            script.src   = `https://maps.googleapis.com/maps/api/js?key=${data.key}&callback=initMap`;
+            script.src   = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(data.key)}&callback=initMap&loading=async`;
             script.async = true;
             script.defer = true;
+            script.onerror = () => showMapLoadError('Map unavailable: failed to load the Google Maps JavaScript SDK.');
             document.head.appendChild(script);
         })
         .catch(err => {
             console.error('Failed to load Google Maps:', err);
-            document.getElementById('map').innerHTML =
-                '<p style="padding:2rem;color:red;">Map unavailable — GOOGLE_MAPS_API_KEY not configured.</p>';
+            showMapLoadError('Map unavailable: GOOGLE_MAPS_API_KEY is not configured.');
         });
 });
