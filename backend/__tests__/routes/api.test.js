@@ -7,7 +7,8 @@ jest.mock('../../services/weatherService', () => ({
 }));
 jest.mock('../../services/trafficService', () => ({
     fetchSGTraffic: jest.fn(),
-    fetchHKTraffic: jest.fn()
+    fetchHKTraffic: jest.fn(),
+    fetchMYTraffic: jest.fn()
 }));
 jest.mock('@slack/web-api', () => ({
     WebClient: jest.fn().mockImplementation(() => ({
@@ -18,7 +19,7 @@ jest.mock('@slack/web-api', () => ({
 const apiRoutes = require('../../routes/api');
 const errorHandler = require('../../middleware/errorHandler');
 const { fetchWeatherData } = require('../../services/weatherService');
-const { fetchSGTraffic, fetchHKTraffic } = require('../../services/trafficService');
+const { fetchSGTraffic, fetchHKTraffic, fetchMYTraffic } = require('../../services/trafficService');
 
 // Build a minimal app for testing just the API routes
 function createApp() {
@@ -31,9 +32,15 @@ function createApp() {
 
 describe('routes/api', () => {
     let app;
+    const originalGoogleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
 
     beforeEach(() => {
         jest.clearAllMocks();
+        if (originalGoogleMapsApiKey === undefined) {
+            delete process.env.GOOGLE_MAPS_API_KEY;
+        } else {
+            process.env.GOOGLE_MAPS_API_KEY = originalGoogleMapsApiKey;
+        }
         app = createApp();
     });
 
@@ -56,11 +63,11 @@ describe('routes/api', () => {
     });
 
     describe('GET /api/weather/:locationKey', () => {
-        it('should return 400 for invalid location key', async () => {
+        it('should return 404 for invalid location key', async () => {
             const res = await request(app).get('/api/weather/mars');
 
-            expect(res.status).toBe(400);
-            expect(res.body).toEqual({ error: 'Invalid location key' });
+            expect(res.status).toBe(404);
+            expect(res.body.error).toContain("Location 'mars' not found");
         });
 
         it('should return 200 with weather data for singapore', async () => {
@@ -86,7 +93,7 @@ describe('routes/api', () => {
 
     describe('GET /api/traffic/:region', () => {
         it('should return 400 for unsupported region', async () => {
-            const res = await request(app).get('/api/traffic/klang-valley');
+            const res = await request(app).get('/api/traffic/mars');
 
             expect(res.status).toBe(400);
             expect(res.body.error).toContain('Unsupported region');
@@ -112,6 +119,16 @@ describe('routes/api', () => {
             expect(res.body.traffic).toEqual(mockTraffic);
         });
 
+        it('should return MY traffic data', async () => {
+            const mockTraffic = [{ description: 'Roadworks', source: 'JKR Roadworks' }];
+            fetchMYTraffic.mockResolvedValue(mockTraffic);
+
+            const res = await request(app).get('/api/traffic/klang-valley');
+
+            expect(res.status).toBe(200);
+            expect(res.body.traffic).toEqual(mockTraffic);
+        });
+
         it('should return 500 when service throws', async () => {
             fetchSGTraffic.mockRejectedValue(new Error('LTA down'));
 
@@ -123,11 +140,11 @@ describe('routes/api', () => {
     });
 
     describe('GET /api/status/:locationKey', () => {
-        it('should return 400 for invalid location', async () => {
+        it('should return 404 for invalid location', async () => {
             const res = await request(app).get('/api/status/invalid');
 
-            expect(res.status).toBe(400);
-            expect(res.body).toEqual({ error: 'Invalid location key' });
+            expect(res.status).toBe(404);
+            expect(res.body.error).toContain("Location 'invalid' not found");
         });
 
         it('should return combined weather + traffic for singapore', async () => {
@@ -169,6 +186,26 @@ describe('routes/api', () => {
             const res = await request(app).get('/api/status/singapore');
 
             expect(res.status).toBe(500);
+        });
+    });
+
+    describe('GET /api/gmaps/key', () => {
+        it('should return 503 when Google Maps API key is not configured', async () => {
+            delete process.env.GOOGLE_MAPS_API_KEY;
+
+            const res = await request(app).get('/api/gmaps/key');
+
+            expect(res.status).toBe(503);
+            expect(res.body).toEqual({ error: 'Google Maps API key not configured' });
+        });
+
+        it('should return the configured Google Maps API key', async () => {
+            process.env.GOOGLE_MAPS_API_KEY = 'test-google-maps-key';
+
+            const res = await request(app).get('/api/gmaps/key');
+
+            expect(res.status).toBe(200);
+            expect(res.body).toEqual({ key: 'test-google-maps-key' });
         });
     });
 });

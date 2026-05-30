@@ -18,6 +18,13 @@ const pageRoutes = require('../../routes/pages');
 const errorHandler = require('../../middleware/errorHandler');
 const { sendSlackNotification } = require('../../services/slackService');
 
+function expectGoogleMapsPage(res) {
+    expect(res.headers['content-type']).toMatch(/html/);
+    expect(res.text).toContain('<script src="/app.js"></script>');
+    expect(res.text).not.toContain('unpkg.com/leaflet');
+    expect(res.text).not.toContain('onclick="switchLocation');
+}
+
 function createApp() {
     const app = express();
     app.use('/', pageRoutes);
@@ -38,7 +45,7 @@ describe('routes/pages', () => {
             const res = await request(app).get('/');
 
             expect(res.status).toBe(200);
-            expect(res.headers['content-type']).toMatch(/html/);
+            expectGoogleMapsPage(res);
         });
     });
 
@@ -47,7 +54,7 @@ describe('routes/pages', () => {
             const res = await request(app).get('/map?lng=103&zoom=10');
 
             expect(res.status).toBe(400);
-            expect(res.text).toContain('Invalid or missing parameters');
+            expect(res.body).toEqual({ error: 'Missing required query parameters: lat, lng, and zoom.' });
         });
 
         it('should return 400 when lng is missing', async () => {
@@ -72,7 +79,7 @@ describe('routes/pages', () => {
             const res = await request(app).get('/map?lat=1.35&lng=103.82&zoom=11');
 
             expect(res.status).toBe(200);
-            expect(res.headers['content-type']).toMatch(/html/);
+            expectGoogleMapsPage(res);
         });
     });
 
