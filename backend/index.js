@@ -398,6 +398,80 @@ async function sendSlackNotification() {
     }
 }
 
+// Public config for frontend (Google Maps API key)
+app.get('/api/config', (req, res) => {
+    res.json({
+        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '',
+        openWeatherAppId: process.env.OPENWEATHER_APP_ID || ''
+    });
+});
+
+// Slack OAuth: redirect to Slack authorization
+app.get('/slack/install', (req, res) => {
+    const clientId = process.env.SLACK_CLIENT_ID;
+    const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
+
+    if (!clientId) {
+        return res.status(500).send('SLACK_CLIENT_ID is not configured. Add it to backend/.env');
+    }
+
+    const redirectUri = `${baseUrl}/slack/oauth/callback`;
+    const scopes = 'chat:write,files:write';
+    const authUrl = `https://slack.com/oauth/v2/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+    res.redirect(authUrl);
+});
+
+// Slack OAuth: exchange authorization code for access token
+app.get('/slack/oauth/callback', async (req, res) => {
+    const { code, error } = req.query;
+
+    if (error) {
+        return res.redirect(`/?slack=error&message=${encodeURIComponent(error)}`);
+    }
+
+    if (!code) {
+        return res.redirect('/?slack=error&message=missing_code');
+    }
+
+    const clientId = process.env.SLACK_CLIENT_ID;
+    const clientSecret = process.env.SLACK_CLIENT_SECRET;
+    const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
+    const redirectUri = `${baseUrl}/slack/oauth/callback`;
+
+    if (!clientId || !clientSecret) {
+        return res.redirect('/?slack=error&message=slack_oauth_not_configured');
+    }
+
+    try {
+        const response = await axios.post(
+            'https://slack.com/api/oauth.v2.access',
+            new URLSearchParams({
+                client_id: clientId,
+                client_secret: clientSecret,
+                code,
+                redirect_uri: redirectUri
+            }).toString(),
+            { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        );
+
+        if (!response.data.ok) {
+            console.error('Slack OAuth error:', response.data);
+            return res.redirect(`/?slack=error&message=${encodeURIComponent(response.data.error || 'oauth_failed')}`);
+        }
+
+        console.log('Slack OAuth success for team:', response.data.team?.name);
+        if (response.data.access_token) {
+            console.log('Store this token as SLACK_BOT_TOKEN:', response.data.access_token);
+        }
+
+        res.redirect('/?slack=success');
+    } catch (err) {
+        console.error('OAuth callback error:', err.message);
+        res.redirect(`/?slack=error&message=${encodeURIComponent(err.message)}`);
+    }
+});
+
 // Home route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));

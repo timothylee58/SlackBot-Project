@@ -112,6 +112,10 @@ SLACK_BOT_TOKEN=xoxb-your-slack-bot-token
 SLACK_CHANNEL_ID=your-slack-channel-id
 LTA_ACCOUNT_KEY=your-lta-account-key
 BASE_URL=http://localhost:3000
+GOOGLE_MAPS_API_KEY=your-google-maps-api-key
+OPENWEATHER_APP_ID=your-openweather-app-id
+SLACK_CLIENT_ID=your-slack-client-id
+SLACK_CLIENT_SECRET=your-slack-client-secret
 ```
 
 ### Setting up a Slack Bot
@@ -163,6 +167,9 @@ GET http://localhost:3000/send-notification
 | GET | `/` | Serves the homepage (`index.html`) |
 | GET | `/map?lat=&lng=&zoom=` | Interactive map view with coordinates |
 | GET | `/send-notification` | Manually trigger a Slack weather notification |
+| GET | `/api/config` | Public frontend config (Google Maps API key) |
+| GET | `/slack/install` | Redirect to Slack OAuth install flow |
+| GET | `/slack/oauth/callback` | Slack OAuth callback (exchanges code for token) |
 
 ---
 
