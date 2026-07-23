@@ -7,7 +7,8 @@ jest.mock('../../services/weatherService', () => ({
 }));
 jest.mock('../../services/trafficService', () => ({
     fetchSGTraffic: jest.fn(),
-    fetchHKTraffic: jest.fn()
+    fetchHKTraffic: jest.fn(),
+    fetchMYTraffic: jest.fn()
 }));
 jest.mock('@slack/web-api', () => ({
     WebClient: jest.fn().mockImplementation(() => ({
@@ -86,7 +87,7 @@ describe('routes/api', () => {
 
     describe('GET /api/traffic/:region', () => {
         it('should return 400 for unsupported region', async () => {
-            const res = await request(app).get('/api/traffic/klang-valley');
+            const res = await request(app).get('/api/traffic/mars');
 
             expect(res.status).toBe(400);
             expect(res.body.error).toContain('Unsupported region');

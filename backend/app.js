@@ -37,8 +37,12 @@ app.use(helmet({
                 "'self'",
                 'data:',
                 'blob:',
+                // Google Maps full allowlist (tiles, Street View, icons, etc.)
                 'https://maps.googleapis.com',
                 'https://maps.gstatic.com',
+                'https://*.googleapis.com',
+                'https://*.gstatic.com',
+                'https://streetviewpixels-pa.googleapis.com',
                 'https://www.hko.gov.hk',       // HK weather icons
                 'https://tilecache.rainviewer.com',
             ],
@@ -52,8 +56,9 @@ app.use(helmet({
                 // RainViewer
                 'https://api.rainviewer.com',
                 'https://tilecache.rainviewer.com',
-                // Google Maps
+                // Google Maps full allowlist (Places, Directions, Geocoding, etc.)
                 'https://maps.googleapis.com',
+                'https://*.googleapis.com',
             ],
             frameSrc:   ["'none'"],
             objectSrc:  ["'none'"],

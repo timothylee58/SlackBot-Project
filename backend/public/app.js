@@ -15,10 +15,20 @@ function getQueryParams() {
     };
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
 var map;
 var markers        = [];
 var openInfoWindow = null;
+var currentLocation = null;  // tracks active region to discard stale fetches
 var cloudOverlay, precipOverlay;
 var cloudVisible   = false;
 var precipVisible  = false;
@@ -103,10 +113,10 @@ function fetchSingaporeWeather() {
                 else if (desc.includes('Sunny'))                          icon = '/icon/sunny.ico';
 
                 addMarker(area.coordinates[0], area.coordinates[1], `
-                    <b>Singapore (${area.area})</b><br>
-                    <img src="${icon}" alt="Weather Icon" style="width:50px;"><br>
-                    ${desc || 'Forecast Data Available Soon'}<br>
-                    Last Updated: ${data.items[0]?.update_timestamp || 'Unknown'}
+                    <b>Singapore (${esc(area.area)})</b><br>
+                    <img src="${esc(icon)}" alt="Weather Icon" style="width:50px;"><br>
+                    ${esc(desc || 'Forecast Data Available Soon')}<br>
+                    Last Updated: ${esc(data.items[0]?.update_timestamp || 'Unknown')}
                 `);
             });
         })
@@ -117,11 +127,12 @@ function fetchSingaporeWeather() {
 }
 
 function fetchMalaysiaWeather() {
-    fetch('https://api.data.gov.my/weather/warning?limit=3')
+    const snapshot = currentLocation;
+    fetch('https://api.data.gov.my/weather/warning?limit=10')
         .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(data => {
+            if (currentLocation !== snapshot) return; // stale — location changed
             const warnings = Array.isArray(data) ? data : (data.data || []);
-            const selected = warnings.slice(2);
 
             const KlangValley = [
                 { city: 'Kuala Lumpur',   coordinates: [3.1390, 101.6869] },
@@ -168,13 +179,22 @@ function fetchMalaysiaWeather() {
 
             const affectedRegions = ['Hulu Selangor', 'Gombak', 'Petaling', 'Hulu Langat', 'FT Kuala Lumpur'];
 
-            selected.forEach(warning => {
+            if (warnings.length === 0) {
+                // No active warnings — place a single "all clear" marker per region
+                [...KlangValley, ...Penang, ...OtherMY].forEach(loc => {
+                    addMarker(loc.coordinates[0], loc.coordinates[1],
+                        `<b>${esc(loc.city)}</b><br>No active weather warnings.`);
+                });
+                return;
+            }
+
+            warnings.forEach(warning => {
                 const text       = warning?.text_en || 'No warnings currently.';
                 const validUntil = warning?.valid_to || 'Unknown';
                 const isKLWarning = affectedRegions.some(r => text.includes(r));
 
                 KlangValley.forEach(loc => {
-                    let content = `<b>${loc.city}</b><br>${text}<br>Valid Until: ${validUntil}`;
+                    let content = `<b>${esc(loc.city)}</b><br>${esc(text)}<br>Valid Until: ${esc(validUntil)}`;
                     if (isKLWarning) content += `<br><img src="/icon/light-rain.ico" style="width:50px;">`;
                     content += `<br><a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>`;
                     addMarker(loc.coordinates[0], loc.coordinates[1], content);
@@ -182,7 +202,7 @@ function fetchMalaysiaWeather() {
 
                 [...Penang, ...OtherMY].forEach(loc => {
                     addMarker(loc.coordinates[0], loc.coordinates[1],
-                        `<b>${loc.city}</b><br>${text}<br>Valid Until: ${validUntil}<br>
+                        `<b>${esc(loc.city)}</b><br>${esc(text)}<br>Valid Until: ${esc(validUntil)}<br>
                          <a href="https://www.met.gov.my/en/nowcasting" target="_blank">More Details</a>`);
                 });
             });
@@ -209,39 +229,44 @@ const hongKongRegions = [
 ];
 
 function fetchHongKongWeather() {
+    const snapshot = currentLocation;
     Promise.all([
         fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en'),
         fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=en'),
     ])
         .then(rs => Promise.all(rs.map(r => { if (!r.ok) throw new Error(r.status); return r.json(); })))
         .then(([reg, flw]) => {
+            if (currentLocation !== snapshot) return; // stale — location changed
             const iconUrl = `https://www.hko.gov.hk/images/HKOWxIconOutline/pic${reg.icon?.[0] || 0}.png`;
+            // rhrread supplies temperature & current icon; flw supplies situation text & outlook
             const content = `
-                <b>Max Temp:</b> ${reg.temperature?.data?.[0]?.value ?? '?'}°C<br>
-                <b>Min Temp:</b> ${reg.temperature?.data?.[1]?.value ?? '?'}°C<br>
-                <b>General Situation:</b> ${reg.generalSituation || 'N/A'}<br>
-                <b>Typhoon Info:</b> ${reg.tcInfo || 'No typhoon warnings'}<br>
-                <b>Forecast:</b> ${reg.weatherForecast?.forecastDesc || 'N/A'}<br>
-                <b>Outlook:</b> ${reg.weatherForecast?.outlook || 'N/A'}<br>
-                <b>Local Waters:</b> ${flw.forecastContent || 'N/A'}<br>
-                <img src="${iconUrl}" style="width:50px;">
+                <b>Max Temp:</b> ${esc(reg.temperature?.data?.[0]?.value ?? '?')}°C<br>
+                <b>Min Temp:</b> ${esc(reg.temperature?.data?.[1]?.value ?? '?')}°C<br>
+                <b>General Situation:</b> ${esc(flw.generalSituation || 'N/A')}<br>
+                <b>Typhoon Info:</b> ${esc(flw.tcInfo || reg.tcInfo || 'No typhoon warnings')}<br>
+                <b>Forecast:</b> ${esc(flw.forecastDesc || 'N/A')}<br>
+                <b>Outlook:</b> ${esc(flw.outlook || 'N/A')}<br>
+                <img src="${esc(iconUrl)}" style="width:50px;">
             `;
-            hongKongRegions.forEach(r => addMarker(r.lat, r.lng, `<b>Weather for ${r.name}</b><br>${content}`));
+            hongKongRegions.forEach(r => addMarker(r.lat, r.lng, `<b>Weather for ${esc(r.name)}</b><br>${content}`));
         })
         .catch(err => console.error('Error fetching HK weather:', err));
 }
 
 // ── Location switcher ─────────────────────────────────────────────────────────
-function switchLocation(location) {
+function switchLocation(location, skipRecenter) {
     const data = {
         'singapore':   { coords: { lat: 1.3521,  lng: 103.8198 }, fn: fetchSingaporeWeather },
         'hong-kong':   { coords: { lat: 22.3193, lng: 114.1694 }, fn: fetchHongKongWeather  },
         'klang-valley':{ coords: { lat: 3.1390,  lng: 101.6869 }, fn: fetchMalaysiaWeather  },
     };
     if (!data[location]) return;
+    currentLocation = location;  // set before async fetch so stale-check works
     clearMarkers();
-    map.setCenter(data[location].coords);
-    map.setZoom(10);
+    if (!skipRecenter) {
+        map.setCenter(data[location].coords);
+        map.setZoom(10);
+    }
     data[location].fn();
 }
 
@@ -280,13 +305,17 @@ function toggleTrafficLayer() {
 
 // ── Map initialisation (called by Google Maps SDK callback) ───────────────────
 function initMap() {
+    const params = new URLSearchParams(window.location.search);
+    const hasExplicitView = params.has('lat') || params.has('lng') || params.has('zoom');
     const { lat, lng, zoom } = getQueryParams();
     map = new google.maps.Map(document.getElementById('map'), {
         center: { lat, lng }, zoom, mapTypeId: 'roadmap',
         fullscreenControl: false,
     });
     loadRainViewerOverlays();
-    switchLocation('singapore');
+    // If URL has explicit coords, load SG markers without recentering so the
+    // user's shared view is preserved; otherwise centre on Singapore as default.
+    switchLocation('singapore', hasExplicitView);
 }
 
 // ── Settings modal ────────────────────────────────────────────────────────────

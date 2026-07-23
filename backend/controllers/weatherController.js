@@ -12,7 +12,7 @@ async function getWeather(req, res, next) {
     }
 
     if (!locations[locationKey]) {
-        return res.status(404).json({ error: `Location '${locationKey}' not found. Valid keys: ${Object.keys(locations).join(', ')}` });
+        return res.status(400).json({ error: 'Invalid location key' });
     }
 
     try {
@@ -37,7 +37,7 @@ async function getStatus(req, res, next) {
     }
 
     if (!locations[locationKey]) {
-        return res.status(404).json({ error: `Location '${locationKey}' not found. Valid keys: ${Object.keys(locations).join(', ')}` });
+        return res.status(400).json({ error: 'Invalid location key' });
     }
 
     try {

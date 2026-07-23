@@ -95,6 +95,12 @@ async function fetchMYTraffic() {
         console.error('MY traffic source 2 (jkr_roadworks) failed:', err.message);
     }
 
+    // If both sources errored (results still empty) we throw so the caller's
+    // withRetry() can attempt again instead of silently returning no incidents.
+    if (results.length === 0) {
+        throw new Error('All Malaysia traffic sources returned no data');
+    }
+
     return results;
 }
 
