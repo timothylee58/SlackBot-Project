@@ -80,10 +80,8 @@ async function triggerNotification(scheduleType) {
 // ── Schedules (all times = SGT, Asia/Singapore) ───────────────────────────────
 // node-cron uses server local time; cron expressions here are written in SGT.
 // Railway/Fly containers default to UTC, so SGT = UTC+8.
-// We document the SGT intention and offset by 8h in the cron expressions.
-
-// Regular updates every 2 hours 8 AM–8 PM SGT  → UTC 00,02,04,06,08,10,12
-cron.schedule('0 0,2,4,6,8,10,12 * * *', () => triggerNotification('regular-2h'), {
+// Regular updates every 2 hours 8 AM–8 PM SGT
+cron.schedule('0 8,10,12,14,16,18,20 * * *', () => triggerNotification('regular-2h'), {
     timezone: 'Asia/Singapore'
 });
 

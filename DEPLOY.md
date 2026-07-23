@@ -6,7 +6,7 @@ Railway is the **confirmed deployment platform**.
 
 ## Railway
 
-Railway builds from `railway.json` using the Nixpacks builder.
+Railway builds from `railway.json` using the Dockerfile builder.
 
 ### Prerequisites
 ```bash
@@ -23,8 +23,7 @@ railway init
 railway variables set \
   LTA_ACCOUNT_KEY=... \
   BASE_URL=https://<your-app>.up.railway.app \
-  GOOGLE_MAPS_API_KEY=AIza... \
-  OPENWEATHERMAP_API_KEY=...
+  GOOGLE_MAPS_API_KEY=AIza...
 
 # Deploy
 railway up
@@ -55,5 +54,5 @@ railway variables     # list environment variables
 If Railway is unavailable, the app can also be deployed to:
 
 - **Fly.io** — `fly.toml` + `Dockerfile` are present. See `fly deploy` docs.
-- **Encore Cloud** — `encore.app` + `slackbot/` service wrapper are present.
+- **Encore Cloud** — a `slackbot/` service wrapper is present.
   See `encore run` / `git push encore main`.

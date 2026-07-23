@@ -24,8 +24,8 @@ function sgForecastEmoji(forecast = '') {
     if (f.includes('heavy rain'))          return '🌧️';
     if (f.includes('moderate rain'))       return '🌦️';
     if (f.includes('light rain') || f.includes('drizzle')) return '🌦️';
-    if (f.includes('cloudy'))              return '☁️';
     if (f.includes('partly cloudy'))       return '⛅';
+    if (f.includes('cloudy'))              return '☁️';
     if (f.includes('fair') || f.includes('sunny') || f.includes('fine')) return '☀️';
     if (f.includes('windy'))               return '💨';
     if (f.includes('hazy'))                return '🌫️';
@@ -43,6 +43,7 @@ async function withRetry(fn, retries = AGENT_RETRIES, timeoutMs = AGENT_TIMEOUT_
                     setTimeout(() => reject(new Error('Agent timeout')), timeoutMs)
                 )
             ]);
+            if (result?.error) throw new Error(result.error);
             return result;
         } catch (err) {
             lastError = err;
@@ -104,9 +105,10 @@ function formatSingapore({ weather, traffic }) {
             ? `_(updated ${new Date(weather.items[0].update_timestamp).toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Singapore' })})_`
             : '';
 
-        weatherText = Object.entries(groups)
+        const grouped = Object.entries(groups)
             .map(([forecast, areas]) => `${sgForecastEmoji(forecast)} *${forecast}:* ${areas.join(', ')}`)
             .join('\n');
+        weatherText = grouped || '_No forecast data for monitored areas._';
         if (updateTime) weatherText = `${updateTime}\n${weatherText}`;
     } else if (weather?.error) {
         weatherText = `:warning: ${weather.error}`;

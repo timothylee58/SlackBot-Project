@@ -1,5 +1,5 @@
 const { getTraffic } = require('../../controllers/trafficController');
-const { fetchSGTraffic, fetchHKTraffic } = require('../../services/trafficService');
+const { fetchSGTraffic, fetchHKTraffic, fetchMYTraffic } = require('../../services/trafficService');
 
 jest.mock('../../services/trafficService');
 
@@ -17,8 +17,8 @@ describe('controllers/trafficController', () => {
     });
 
     describe('getTraffic', () => {
-        it('should return 400 for unsupported region', async () => {
-            req.params.region = 'klang-valley';
+        it('should return 400 for completely unknown region', async () => {
+            req.params.region = 'mars';
 
             await getTraffic(req, res, next);
 
@@ -26,14 +26,6 @@ describe('controllers/trafficController', () => {
             expect(res.json).toHaveBeenCalledWith(
                 expect.objectContaining({ error: expect.stringContaining('Unsupported region') })
             );
-        });
-
-        it('should return 400 for completely unknown region', async () => {
-            req.params.region = 'mars';
-
-            await getTraffic(req, res, next);
-
-            expect(res.status).toHaveBeenCalledWith(400);
         });
 
         it('should return SG traffic for singapore', async () => {
@@ -45,19 +37,32 @@ describe('controllers/trafficController', () => {
 
             expect(fetchSGTraffic).toHaveBeenCalledTimes(1);
             expect(fetchHKTraffic).not.toHaveBeenCalled();
-            expect(res.json).toHaveBeenCalledWith({ traffic: mockTraffic });
+            expect(fetchMYTraffic).not.toHaveBeenCalled();
+            expect(res.json).toHaveBeenCalledWith({ region: 'singapore', traffic: mockTraffic });
         });
 
         it('should return HK traffic for hong-kong', async () => {
             req.params.region = 'hong-kong';
-            const mockTraffic = [{ content: 'Road closure' }];
+            const mockTraffic = [{ description: 'Road closure', district: 'C&W' }];
             fetchHKTraffic.mockResolvedValue(mockTraffic);
 
             await getTraffic(req, res, next);
 
             expect(fetchHKTraffic).toHaveBeenCalledTimes(1);
             expect(fetchSGTraffic).not.toHaveBeenCalled();
-            expect(res.json).toHaveBeenCalledWith({ traffic: mockTraffic });
+            expect(res.json).toHaveBeenCalledWith({ region: 'hong-kong', traffic: mockTraffic });
+        });
+
+        it('should return MY traffic for klang-valley', async () => {
+            req.params.region = 'klang-valley';
+            const mockTraffic = [{ description: 'Roadworks: MRT', source: 'JKR Roadworks' }];
+            fetchMYTraffic.mockResolvedValue(mockTraffic);
+
+            await getTraffic(req, res, next);
+
+            expect(fetchMYTraffic).toHaveBeenCalledTimes(1);
+            expect(fetchSGTraffic).not.toHaveBeenCalled();
+            expect(res.json).toHaveBeenCalledWith({ region: 'klang-valley', traffic: mockTraffic });
         });
 
         it('should call next on error', async () => {
