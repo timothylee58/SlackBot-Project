@@ -1,5 +1,17 @@
 const runtimeSettings = require('../config/runtimeSettings');
 
+// Middleware: if SETTINGS_SECRET is set, require it via x-settings-token header.
+// Without the env var the endpoint is open (dev / single-user mode).
+function requireSettingsAuth(req, res, next) {
+    const secret = process.env.SETTINGS_SECRET;
+    if (!secret) return next();
+    const provided = req.headers['x-settings-token'];
+    if (!provided || provided !== secret) {
+        return res.status(401).json({ error: 'Unauthorized: invalid or missing x-settings-token header' });
+    }
+    next();
+}
+
 // GET /api/settings — returns current values (token masked)
 function getSettings(req, res) {
     const { SLACK_BOT_TOKEN, SLACK_CHANNEL_ID } = runtimeSettings.getAll();
@@ -25,4 +37,4 @@ function updateSettings(req, res) {
     res.json({ message: 'Settings saved successfully' });
 }
 
-module.exports = { getSettings, updateSettings };
+module.exports = { getSettings, updateSettings, requireSettingsAuth };
