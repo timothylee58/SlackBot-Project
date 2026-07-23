@@ -1,4 +1,5 @@
 .env
+config/runtime-settings.json
 node_modules/
 .vercel
 frontend/
