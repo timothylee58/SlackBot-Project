@@ -23,7 +23,8 @@ function get(key) {
 
 function set(updates) {
     settings = { ...settings, ...updates };
-    fs.writeFileSync(FILE, JSON.stringify(settings, null, 2), 'utf8');
+    // mode 0o600 = owner read/write only — protects the Slack token from other local users
+    fs.writeFileSync(FILE, JSON.stringify(settings, null, 2), { encoding: 'utf8', mode: 0o600 });
 }
 
 function getAll() {

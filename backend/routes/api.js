@@ -5,7 +5,7 @@ const { getWeather, getStatus } = require('../controllers/weatherController');
 const { getTraffic } = require('../controllers/trafficController');
 const { getLocations } = require('../controllers/slackController');
 const { getGoogleMapsKey } = require('../controllers/weatherProxyController');
-const { getSettings, updateSettings } = require('../controllers/settingsController');
+const { getSettings, updateSettings, requireSettingsAuth } = require('../controllers/settingsController');
 
 // Location metadata (used by the frontend map)
 router.get('/locations', getLocations);
@@ -24,7 +24,7 @@ router.get('/gmaps/key', getGoogleMapsKey);
 
 // Slack credentials — user-configurable at runtime
 router.get('/settings', getSettings);
-router.post('/settings', updateSettings);
+router.post('/settings', requireSettingsAuth, updateSettings);
 
 // Catch-all for undefined /api/* routes
 router.use((req, res) => {

@@ -17,7 +17,7 @@ router.get('/map', (req, res) => {
     const { lat, lng, zoom } = req.query;
 
     if (!lat || !lng || !zoom) {
-        return res.status(400).json({ error: 'Missing required query parameters: lat, lng, and zoom.' });
+        return res.status(400).send('Invalid or missing parameters: lat, lng, and zoom are required.');
     }
 
     const latNum = parseFloat(lat);
