@@ -3,6 +3,7 @@ const { fetchWeatherData } = require('./weatherService');
 const { fetchSGTraffic, fetchHKTraffic, fetchMYTraffic } = require('./trafficService');
 const { locations } = require('../config/locations');
 const runtimeSettings = require('../config/runtimeSettings');
+const { agentFetchDuration, slackNotificationDuration } = require('./metrics');
 
 const MAP_URL = process.env.BASE_URL || 'http://localhost:3000';
 const AGENT_TIMEOUT_MS = 12000;
@@ -61,26 +62,32 @@ async function withRetry(fn, retries = AGENT_RETRIES, timeoutMs = AGENT_TIMEOUT_
 // ── Per-region agents ─────────────────────────────────────────────────────────
 
 async function agentSingapore() {
+    const end = agentFetchDuration.startTimer({ region: 'singapore' });
     const [weather, traffic] = await Promise.all([
         withRetry(() => fetchWeatherData('singapore')),
         withRetry(() => fetchSGTraffic())
     ]);
+    end();
     return { weather, traffic };
 }
 
 async function agentMalaysia() {
+    const end = agentFetchDuration.startTimer({ region: 'klang-valley' });
     const [weather, traffic] = await Promise.all([
         withRetry(() => fetchWeatherData('klang-valley')),
         withRetry(() => fetchMYTraffic())
     ]);
+    end();
     return { weather, traffic };
 }
 
 async function agentHongKong() {
+    const end = agentFetchDuration.startTimer({ region: 'hong-kong' });
     const [weather, traffic] = await Promise.all([
         withRetry(() => fetchWeatherData('hong-kong')),
         withRetry(() => fetchHKTraffic())
     ]);
+    end();
     return { weather, traffic };
 }
 
@@ -273,26 +280,31 @@ async function prepareSlackMessage() {
 
 // Posts the weather + traffic update to the configured Slack channel
 async function sendSlackNotification() {
-    const token     = runtimeSettings.get('SLACK_BOT_TOKEN');
-    const channelId = runtimeSettings.get('SLACK_CHANNEL_ID');
+    const end = slackNotificationDuration.startTimer();
+    try {
+        const token     = runtimeSettings.get('SLACK_BOT_TOKEN');
+        const channelId = runtimeSettings.get('SLACK_CHANNEL_ID');
 
-    if (!token || !channelId) {
-        throw new Error('Slack credentials not configured. Set SLACK_BOT_TOKEN and SLACK_CHANNEL_ID via the Settings panel.');
+        if (!token || !channelId) {
+            throw new Error('Slack credentials not configured. Set SLACK_BOT_TOKEN and SLACK_CHANNEL_ID via the Settings panel.');
+        }
+
+        const slackClient = new WebClient(token);
+        const message = await prepareSlackMessage();
+
+        console.log('Formatted Slack Message:', JSON.stringify(message, null, 2));
+
+        const response = await slackClient.chat.postMessage({
+            channel: channelId,
+            blocks: message.blocks,
+            text: "🌤️ Weather & Traffic Update — SG · MY · HK"
+        });
+
+        console.log('Message sent successfully:', response.ts);
+        return response;
+    } finally {
+        end();
     }
-
-    const slackClient = new WebClient(token);
-    const message = await prepareSlackMessage();
-
-    console.log('Formatted Slack Message:', JSON.stringify(message, null, 2));
-
-    const response = await slackClient.chat.postMessage({
-        channel: channelId,
-        blocks: message.blocks,
-        text: "🌤️ Weather & Traffic Update — SG · MY · HK"
-    });
-
-    console.log('Message sent successfully:', response.ts);
-    return response;
 }
 
 // Backwards-compatible shim used by weatherController and tests.

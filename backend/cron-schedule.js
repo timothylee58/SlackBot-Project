@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const { sendSlackNotification } = require('./services/slackService');
+const { cronRunsTotal, circuitBreakerState } = require('./services/metrics');
 
 // ── Circuit breaker state ─────────────────────────────────────────────────────
 // Prevents runaway retries when Slack or upstream APIs are persistently down.
@@ -22,12 +23,14 @@ const breaker = {
     recordSuccess() {
         this.failures  = 0;
         this.openedAt  = null;
+        circuitBreakerState.set(0);
     },
 
     recordFailure(label) {
         this.failures++;
         if (this.failures >= this.OPEN_THRESHOLD && !this.openedAt) {
             this.openedAt = Date.now();
+            circuitBreakerState.set(1);
             const resetMin = Math.round(this.RESET_AFTER_MS / 60000);
             console.error(`[cron] circuit breaker OPEN after ${this.failures} failures — pausing for ${resetMin} min`);
         }
@@ -44,12 +47,14 @@ async function sendWithRetry(scheduleType) {
         try {
             await sendSlackNotification();
             breaker.recordSuccess();
+            cronRunsTotal.inc({ schedule: scheduleType, outcome: 'success' });
             console.log(`[cron][${scheduleType}] ✓ sent (attempt ${attempt})`);
             return;
         } catch (err) {
             const isLast = attempt === MAX_RETRIES + 1;
             if (isLast) {
                 breaker.recordFailure(scheduleType);
+                cronRunsTotal.inc({ schedule: scheduleType, outcome: 'failure' });
                 console.error(`[cron][${scheduleType}] ✗ all ${MAX_RETRIES + 1} attempts failed — ${err.message}`);
             } else {
                 const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
@@ -70,6 +75,7 @@ async function triggerNotification(scheduleType) {
 
     if (breaker.isOpen()) {
         const remainMs = breaker.RESET_AFTER_MS - (Date.now() - breaker.openedAt);
+        cronRunsTotal.inc({ schedule: scheduleType, outcome: 'skipped_breaker_open' });
         console.warn(`[cron][${scheduleType}] circuit breaker open — skipping (resets in ~${Math.ceil(remainMs / 60000)} min)`);
         return;
     }
