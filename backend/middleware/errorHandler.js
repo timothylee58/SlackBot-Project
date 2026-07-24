@@ -2,7 +2,7 @@
 // Catches any error passed via next(err) from controllers
 
 function errorHandler(err, req, res, next) {
-    console.error(`[Error] ${req.method} ${req.path}:`, err.message);
+    console.error('[Error] %s %s: %s', req.method, req.path, err.message);
 
     if (res.headersSent) {
         return next(err);
