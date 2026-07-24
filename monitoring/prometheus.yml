@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 30s
+
+scrape_configs:
+  - job_name: 'slackbot'
+    metrics_path: /metrics
+    # If SETTINGS_SECRET is configured on the app, uncomment and set the header
+    # (requires Prometheus >= 2.47 for http_headers support):
+    # http_headers:
+    #   X-Settings-Token:
+    #     values: ['<SETTINGS_SECRET>']
+    static_configs:
+      - targets: ['host.docker.internal:3000']

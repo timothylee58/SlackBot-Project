@@ -56,3 +56,28 @@ If Railway is unavailable, the app can also be deployed to:
 - **Fly.io** — `fly.toml` + `Dockerfile` are present. See `fly deploy` docs.
 - **Encore Cloud** — a `slackbot/` service wrapper is present.
   See `encore run` / `git push encore main`.
+
+---
+
+## Monitoring (Prometheus + Grafana)
+
+The app exposes Prometheus-format metrics at `GET /metrics` (HTTP request
+latency, cron run outcomes, circuit breaker state, per-region agent fetch
+duration, Slack notification duration). If `SETTINGS_SECRET` is set, the
+endpoint requires the same `x-settings-token` header as `/api/settings`.
+
+### Local stack
+```bash
+cd monitoring
+docker compose up -d
+```
+- Prometheus: http://localhost:9090 (scrapes the app on `host.docker.internal:3000`)
+- Grafana: http://localhost:3001 (login `admin` / `admin`), add Prometheus
+  (`http://prometheus:9090`) as a data source and build dashboards from the
+  metrics above.
+
+### Hosted alternative
+Skip running your own Prometheus/Grafana by using
+[Grafana Cloud](https://grafana.com/products/cloud/)'s free tier — configure
+its Prometheus remote-write/scrape agent to hit your Railway app's public
+`/metrics` URL.

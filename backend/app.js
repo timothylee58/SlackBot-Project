@@ -6,6 +6,8 @@ const limiter      = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
 const apiRoutes    = require('./routes/api');
 const pageRoutes   = require('./routes/pages');
+const { register, httpMetricsMiddleware } = require('./services/metrics');
+const { requireSettingsAuth } = require('./controllers/settingsController');
 
 const app = express();
 
@@ -70,9 +72,18 @@ app.use(helmet({
 
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(limiter);
+app.use(httpMetricsMiddleware);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ── Metrics endpoint (Prometheus scrape target) ───────────────────────────────
+// Gated behind the same token as /api/settings — metrics can reveal traffic
+// patterns and shouldn't be public on a shared/free-tier host.
+app.get('/metrics', requireSettingsAuth, async (req, res) => {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+});
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api', apiRoutes);
