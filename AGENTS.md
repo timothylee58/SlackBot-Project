@@ -24,16 +24,16 @@ The server starts on port 3000. It requires a `backend/.env` file (see README �
 - `GET /api/status/:locationKey` — combined weather + traffic
 - `GET /send-notification` — triggers Slack message (requires valid Slack credentials)
 
-**Without Slack secrets:** The server runs with placeholder `SLACK_BOT_TOKEN` / `SLACK_CHANNEL_ID` in `backend/.env`. Weather and map endpoints work; `/send-notification` returns HTTP 200 but Slack delivery fails with `invalid_auth` until real credentials are configured (locally or via Cursor secrets).
+**Without Slack secrets:** Copy `backend/.env.example` to `backend/.env` with placeholder `SLACK_BOT_TOKEN` / `SLACK_CHANNEL_ID`. Weather and map endpoints work. `/send-notification` builds the full Slack payload but returns **HTTP 500** with `invalid_auth` when Slack rejects placeholder tokens (configure real credentials via `.env`, Cursor secrets, or the in-app **Slack Settings** panel, which persists to `backend/config/runtime-settings.json`).
+
+**Google Maps:** Set `GOOGLE_MAPS_API_KEY` in `.env` for the interactive map on `/`; without it the homepage still loads but the map shows a Google Maps load error.
 
 ### Linting and testing
 
 - **No linter** is configured (no ESLint/Prettier).
-- **Jest** is in devDependencies but no test files exist. The `npm test` script is a placeholder that exits with code 1.
-- If adding tests, use Jest + Supertest (already in devDependencies). Note that `index.js` starts the server on import (`app.listen` is called at module top-level), so Supertest-based tests need to account for this.
+- **Jest + Supertest:** `cd backend && npm test` runs suites under `backend/__tests__/`. Tests import `app` from `app.js` directly (not `index.js`), so they do not bind port 3000. Some tests may fail if they drift from current API behavior (status codes, traffic URLs, error messages).
+- **First-time env:** `cp backend/.env.example backend/.env` before starting the server.
 
 ### Gotchas
-
-- `dotenv` is loaded after `LTA_KEY` is assigned on line 8 of `index.js`, so the LTA key will be `undefined` unless the env var is set at the system level or the code is fixed. Weather endpoints work fine regardless.
 - The `body-parser` package is used but not listed in `package.json` dependencies — it works because Express v4 bundles it, but imports may produce warnings in some environments.
 - Puppeteer (for map screenshots) requires Chromium system dependencies. It is not needed for core weather/API functionality.

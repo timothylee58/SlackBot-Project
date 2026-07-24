@@ -5,9 +5,11 @@ const router = express.Router();
 const { triggerNotification } = require('../controllers/slackController');
 const { requireNotificationAuth } = require('../middleware/notificationAuth');
 
+const mapPagePath = path.join(__dirname, '..', 'public', 'index.html');
+
 // Serve the homepage
 router.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'index.html'));
+    res.sendFile(mapPagePath);
 });
 
 // Serve the interactive map page (lat/lng/zoom passed as query params)
@@ -32,7 +34,7 @@ router.get('/map', (req, res) => {
         return res.status(400).json({ error: 'Invalid zoom: must be an integer between 1 and 18.' });
     }
 
-    res.sendFile(path.join(__dirname, '..', 'index.html'));
+    res.sendFile(mapPagePath);
 });
 
 // Manual trigger endpoint for testing Slack notifications (requires auth token)
